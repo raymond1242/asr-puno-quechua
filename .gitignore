@@ -258,5 +258,7 @@ finetune_cpt_collao.sh
 
 # shared task: test audio and generated manifests/submissions
 data/test/
+data/scripted/
+data/spontaneous/
 data/manifests/sharedtask*/
 submission/
