@@ -8,6 +8,8 @@ are fairseq `.pt` files and fairseq 0.12.2 has no wheel for modern Python, so
 reproduces the paper to within 0.14 WER points on its out-of-domain set
 (27.26% vs 27.4%), so the architecture and weights are faithful.
 
+**Continuing this work?** Read `HANDOFF.md` first: state, findings and next steps.
+
 ## Quick start on the GPU machine
 
 ```bash
