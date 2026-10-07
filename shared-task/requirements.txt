@@ -1,6 +1,8 @@
 # SIMBig 2026 Task 1 pipeline.
-# On the GPU box install torch first, matched to your CUDA:
-#   pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu124
+# On the GPU box install torch first, matched to your CUDA. Blackwell cards
+# (RTX 50xx, sm_120) need cu128 or newer; cu124 builds do not run on them:
+#   pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu128
+# Tested with torch 2.11 + transformers 5.19 (and 4.x before that).
 torch>=2.4
 torchaudio>=2.4
 transformers>=4.45
@@ -15,3 +17,18 @@ requests>=2.31
 python-dotenv>=1.0
 tqdm>=4.66
 safetensors>=0.4
+
+# Beam search with a character LM (06_build_lm.py, 07_tune_lm.py, --lm_config).
+# The PyPI builds of both cap KenLM at order 6; the character LMs go to 12.
+# Rebuild both with the same higher cap -- they must agree, or flashlight
+# reads KenLM state with the wrong layout:
+#   pip install cmake
+#   MAX_ORDER=16 pip install --force-reinstall --no-deps --no-binary kenlm kenlm
+#   pip download flashlight-text==0.0.7 --no-binary :all: --no-deps -d src
+#   # in src/flashlight-text-0.0.7/setup.py, add to cmake_args:
+#   #   "-DFL_TEXT_KENLM_MAX_ORDER=" + os.getenv("KENLM_MAX_ORDER", "6"),
+#   CMAKE_POLICY_VERSION_MINIMUM=3.5 KENLM_MAX_ORDER=16 BUILD_VERSION=0.0.7 \
+#     pip install --force-reinstall --no-deps --no-build-isolation src/flashlight-text-0.0.7
+# Orders <= 6 work with the plain PyPI wheels below.
+kenlm>=0.2
+flashlight-text>=0.0.7
