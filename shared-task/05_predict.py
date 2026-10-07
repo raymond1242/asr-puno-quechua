@@ -110,6 +110,15 @@ def main():
     p.add_argument("--header", action="store_true",
                    help="Write a header row (the spec does not ask for one)")
     p.add_argument("--no_zip", action="store_true")
+    p.add_argument("--lm_config", default=None,
+                   help="Beam search with a character LM: the .best.json that "
+                        "07_tune_lm.py writes (LM, alpha, beta per domain)")
+    p.add_argument("--lm_dir", default=None,
+                   help="Where the LMs named in --lm_config live. "
+                        "Default: the config's own directory")
+    p.add_argument("--metadata", default=None,
+                   help="qxp_test_dataset.tsv: its `type` column picks each clip's "
+                        "LM. Default: next to --template")
     args = p.parse_args()
 
     from transformers import AutoConfig, AutoProcessor
@@ -128,6 +137,28 @@ def main():
     paths = collect_audio(args.audio_dir, args.template)
     print(f"Model : {args.model} ({config.model_type}) on {device}")
     print(f"Audio : {len(paths)} files from {', '.join(map(str, args.audio_dir))}")
+
+    # Beam search: each clip decodes with its own domain's LM and weights. A
+    # clip with no known domain is an error, never a silent fall back to greedy.
+    decoders, domain_of = {}, {}
+    if args.lm_config:
+        if is_whisper:
+            sys.exit("--lm_config applies to CTC models only")
+        import pandas as pd
+        from ctc_lm import ctc_logprobs, decoders_from_config
+        meta = Path(args.metadata) if args.metadata else (
+            Path(args.template).parent / "qxp_test_dataset.tsv" if args.template else None)
+        if meta is None or not meta.exists():
+            sys.exit("--lm_config needs --metadata (qxp_test_dataset.tsv) for each clip's type")
+        domain_of = dict(pd.read_csv(meta, sep="\t", quoting=3)[["file_name", "type"]].values)
+        vocab = processor.tokenizer.convert_ids_to_tokens(list(range(len(processor.tokenizer))))
+        decoders = decoders_from_config(args.lm_config, vocab, args.lm_dir)
+        unknown = [p.name for p in paths if domain_of.get(p.name) not in decoders]
+        if unknown:
+            sys.exit(f"{len(unknown)} clips have no type in {meta} or no LM for "
+                     f"their type, e.g. {unknown[:3]}")
+        for d, n in pd.Series([domain_of[p.name] for p in paths]).value_counts().items():
+            print(f"LM    : {d:<12} {n} clips, beam search + LM")
 
     rows, failures, total_s = [], [], 0.0
     t0 = time.time()
@@ -159,6 +190,10 @@ def main():
                         language=args.language, task="transcribe", max_new_tokens=440,
                     )
                     texts = processor.batch_decode(ids, skip_special_tokens=True)
+                elif decoders:
+                    lps = ctc_logprobs(model, processor, audios, device)
+                    texts = [decoders[domain_of[path.name]].decode(lp)
+                             for path, lp in zip(kept, lps)]
                 else:
                     inputs = processor(
                         audios, sampling_rate=16000, return_tensors="pt",

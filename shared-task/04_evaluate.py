@@ -91,12 +91,17 @@ def decode_ctc_batch(model, processor, audios, device):
     return [processor.decode(ids[i, :int(frames[i])]) for i in range(len(ids))]
 
 
-def transcribe(model, processor, paths, device, is_whisper, batch_size, language):
+def transcribe(model, processor, paths, device, is_whisper, batch_size, language,
+               decoder=None):
     out = []
     step = 1 if is_whisper else batch_size
     for i in range(0, len(paths), step):
         audios = [load_audio(p) for p in paths[i:i + step]]
-        if is_whisper:
+        if decoder is not None:
+            from ctc_lm import ctc_logprobs
+            out += [decoder.decode(lp)
+                    for lp in ctc_logprobs(model, processor, audios, device)]
+        elif is_whisper:
             with torch.no_grad():
                 feats = processor(audios[0], sampling_rate=16000,
                                   return_tensors="pt")["input_features"].to(device)
@@ -119,6 +124,12 @@ def main():
     p.add_argument("--limit", type=int, default=None, help="For a quick check")
     p.add_argument("--save_predictions", default=None,
                    help="Directory to write per-utterance hypotheses")
+    p.add_argument("--lm_config", default=None,
+                   help="Beam search with a character LM: the .best.json that "
+                        "07_tune_lm.py writes (LM, alpha, beta per domain)")
+    p.add_argument("--lm_dir", default=None,
+                   help="Where the LMs named in --lm_config live. "
+                        "Default: the config's own directory")
     args = p.parse_args()
 
     from transformers import AutoConfig, AutoProcessor
@@ -143,8 +154,20 @@ def main():
         from transformers import AutoModelForCTC as ModelCls
     model = ModelCls.from_pretrained(args.model).to(device).eval()
 
+    decoders = {}
+    if args.lm_config:
+        if is_whisper:
+            sys.exit("--lm_config applies to CTC models only")
+        from ctc_lm import decoders_from_config
+        vocab = processor.tokenizer.convert_ids_to_tokens(list(range(len(processor.tokenizer))))
+        decoders = decoders_from_config(args.lm_config, vocab, args.lm_dir)
+
     print(f"Model      : {args.model} ({config.model_type}) on {device}")
-    print(f"Manifests  : {man}  split={args.split}\n")
+    print(f"Manifests  : {man}  split={args.split}")
+    for domain in domains:
+        print(f"Decoding   : {domain:<12} "
+              + ("beam search + LM" if domain in decoders else "greedy"))
+    print()
 
     results, t0 = {}, time.time()
     for domain, df in domains.items():
@@ -152,7 +175,7 @@ def main():
             df = df.head(args.limit)
         paths = df.path.tolist()
         hyps = transcribe(model, processor, paths, device, is_whisper,
-                          args.batch_size, args.language)
+                          args.batch_size, args.language, decoders.get(domain))
 
         refs = [score_normalize(t) for t in df.text]
         hyps_n = [score_normalize(t) for t in hyps]
@@ -192,7 +215,7 @@ def main():
 
     print(f"\n{time.time()-t0:.0f}s total")
 
-    out = Path(args.model) / f"metrics_{args.split}.json"
+    out = Path(args.model) / f"metrics_{args.split}{'_lm' if decoders else ''}.json"
     try:
         out.write_text(json.dumps(results, indent=2))
         print(f"Saved {out}")

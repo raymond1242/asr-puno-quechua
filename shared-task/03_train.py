@@ -334,7 +334,11 @@ def main():
         return logits.argmax(dim=-1)
 
     def compute_metrics(pred):
-        ids = pred.predictions  # already argmaxed by preprocess_logits
+        # Already argmaxed by preprocess_logits. The Trainer pads predictions
+        # across batches with -100, which decodes as a literal "<unk>" glued to
+        # the last word; map it to the blank so CTC decoding drops it.
+        ids = np.where(pred.predictions != -100, pred.predictions,
+                       processor.tokenizer.pad_token_id)
         labels = np.where(pred.label_ids != -100, pred.label_ids,
                           processor.tokenizer.pad_token_id)
         hyp = processor.batch_decode(ids)
@@ -353,18 +357,24 @@ def main():
         per_device_eval_batch_size=args.eval_batch_size,
         gradient_accumulation_steps=args.grad_accum,
         learning_rate=args.lr,
-        warmup_ratio=args.warmup_ratio,
+        # An integer step count: transformers 5 dropped `warmup_ratio`, and 4.x
+        # truncates a fractional `warmup_steps` to no warmup at all.
+        warmup_steps=int(args.max_steps * args.warmup_ratio),
         lr_scheduler_type="linear",
         fp16=args.fp16,
         gradient_checkpointing=True,
-        group_by_length=False,  # handled by LengthSortedTrainer below
+        # Length grouping is DurationBatchSampler's job (see the Trainer below).
         eval_strategy="steps",
         eval_steps=args.eval_steps,
         save_steps=args.eval_steps,
         save_total_limit=2,
         logging_steps=50,
         load_best_model_at_end=True,
-        metric_for_best_model="eval_scripted_wer" if "scripted" in dev_sets else None,
+        # Both domains count equally in the ranking, so checkpoints are picked
+        # on their mean WER (added by DurationBatchTrainer.evaluate), never on
+        # scripted alone.
+        metric_for_best_model=("eval_mean_wer" if len(dev_sets) > 1
+                               else f"eval_{next(iter(dev_sets))}_wer"),
         greater_is_better=False,
         dataloader_num_workers=4,
         seed=args.seed,
@@ -397,6 +407,36 @@ def main():
                 num_workers=self.args.dataloader_num_workers,
                 pin_memory=self.args.dataloader_pin_memory,
             )
+
+        def prediction_step(self, model, inputs, prediction_loss_only, ignore_keys=None):
+            """Force each clip's padded frames to the blank before decoding.
+
+            The model still emits symbols over the zero padding, and they land
+            at the end of the shorter clips' transcripts (04_evaluate.py trims
+            for the same reason). Left in, the in-training WER read 24.65 for a
+            model that 04_evaluate.py scored at 10.95 -- and checkpoint
+            selection runs on that number.
+            """
+            loss, logits, labels = super().prediction_step(
+                model, inputs, prediction_loss_only, ignore_keys)
+            mask = inputs.get("attention_mask")
+            if isinstance(logits, torch.Tensor) and mask is not None:
+                frames = self.model._get_feat_extract_output_lengths(mask.sum(-1))
+                pad = (torch.arange(logits.shape[1], device=logits.device)[None, :]
+                       >= frames[:, None])
+                blank = torch.full_like(logits[0, 0], torch.finfo(logits.dtype).min)
+                blank[processor.tokenizer.pad_token_id] = 0
+                logits = torch.where(pad[..., None], blank, logits)
+            return loss, logits, labels
+
+        def evaluate(self, eval_dataset=None, ignore_keys=None, metric_key_prefix="eval"):
+            """Add the mean WER over both dev domains, for checkpoint selection."""
+            metrics = super().evaluate(eval_dataset, ignore_keys, metric_key_prefix)
+            keys = [f"{metric_key_prefix}_{d}_wer" for d in ("scripted", "spontaneous")]
+            if all(k in metrics for k in keys):
+                metrics[f"{metric_key_prefix}_mean_wer"] = sum(metrics[k] for k in keys) / 2
+                self.log({f"{metric_key_prefix}_mean_wer": metrics[f"{metric_key_prefix}_mean_wer"]})
+            return metrics
 
     trainer = DurationBatchTrainer(
         model=model,

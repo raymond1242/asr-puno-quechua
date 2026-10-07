@@ -55,6 +55,7 @@ import sys
 import unicodedata
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -243,6 +244,22 @@ def split_by_sentence(df, dev_frac, heldout_frac, seed):
     return df.text.map(lambda t: "heldout" if t in held else "dev" if t in dev else "train")
 
 
+def split_by_both(df, dev_frac, heldout_frac, seed, dev_text_frac, heldout_text_frac):
+    """Speaker- AND text-disjoint split: the condition the official test is in.
+
+    The test's read sentences are not among the 2,067 we train on (see
+    06_build_lm.py), and its speakers are new. A speaker-only dev rewards a
+    model for remembering sentences other speakers read in train. Here dev is
+    dev speakers reading dev sentences; train is train speakers reading train
+    sentences; the crossings are dropped ("unused"). Dev size is roughly
+    dev_frac x dev_text_frac of the audio, so both fractions run larger than
+    in the single-axis splits.
+    """
+    spk = split_by_speaker(df, dev_frac, heldout_frac, seed)
+    txt = split_by_sentence(df, dev_text_frac, heldout_text_frac, seed)
+    return pd.Series(np.where(spk == txt, spk, "unused"), index=df.index)
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--min_s", type=float, default=0.4)
@@ -250,7 +267,11 @@ def main():
                    help="Drop longer clips (decision 2)")
     p.add_argument("--dev_frac", type=float, default=0.05)
     p.add_argument("--heldout_frac", type=float, default=0.05)
-    p.add_argument("--split_by", choices=["speaker", "sentence"], default="speaker")
+    p.add_argument("--split_by", choices=["speaker", "sentence", "both"], default="speaker")
+    p.add_argument("--dev_text_frac", type=float, default=0.15,
+                   help="--split_by both: share of sentences reserved for dev")
+    p.add_argument("--heldout_text_frac", type=float, default=0.15,
+                   help="--split_by both: share of sentences reserved for heldout")
     p.add_argument("--keep_accents", action="store_true",
                    help="Keep accented vowels instead of folding them (see normalize())")
     p.add_argument("--no_silver", action="store_true")
@@ -288,8 +309,15 @@ def main():
 
     # ---- scripted split ---------------------------------------------------
     print(f"\nScripted split (by {args.split_by})")
-    splitter = split_by_speaker if args.split_by == "speaker" else split_by_sentence
-    scripted["split"] = splitter(scripted, args.dev_frac, args.heldout_frac, args.seed)
+    if args.split_by == "both":
+        scripted["split"] = split_by_both(scripted, args.dev_frac, args.heldout_frac, args.seed,
+                                          args.dev_text_frac, args.heldout_text_frac)
+        unused = scripted.split == "unused"
+        print(f"  {unused.sum():,} clips ({scripted.duration_s[unused].sum()/3600:.2f} h) cross "
+              f"a speaker and a sentence boundary -- dropped")
+    else:
+        splitter = split_by_speaker if args.split_by == "speaker" else split_by_sentence
+        scripted["split"] = splitter(scripted, args.dev_frac, args.heldout_frac, args.seed)
 
     # ---- spontaneous split: honour the organisers' own assignment ---------
     print("Spontaneous split (organisers' `split` column; silver -> train)")

@@ -99,6 +99,22 @@ def extract(archive: Path, dest_dir: Path):
         raise RuntimeError(f"{archive} is neither a tar nor a zip archive.")
 
 
+def flatten_release_dir(dest_dir: Path):
+    """Lift the contents of a versioned top-level folder into dest_dir.
+
+    The archives unpack to `cv-corpus-27.0-2026-09-11/qxp/` and
+    `sps-corpus-5.0-2026-09-11-qxp/`, while 01_build_manifests.py and
+    run_all.sh expect `scripted/qxp/` and `spontaneous/ss-corpus-qxp.tsv`.
+    """
+    entries = list(dest_dir.iterdir())
+    if len(entries) != 1 or not entries[0].is_dir() or "corpus-" not in entries[0].name:
+        return
+    top = entries[0]
+    for child in top.iterdir():
+        child.rename(dest_dir / child.name)
+    top.rmdir()
+
+
 def already_extracted(dest_dir: Path) -> bool:
     """A dataset counts as present once it holds a TSV and some audio."""
     if not dest_dir.exists():
@@ -141,6 +157,7 @@ def main():
 
         print("  extracting...")
         extract(archive, dest_dir)
+        flatten_release_dir(dest_dir)
         if not args.keep_archive:
             archive.unlink()
         print(f"  done -> {dest_dir}")
