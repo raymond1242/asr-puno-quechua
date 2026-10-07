@@ -208,7 +208,7 @@ __marimo__/
 
 # custom
 .pip/
-data/scripted/
+data/scripted/qxp
 data/spontaneous/
 data/wav/*
 logs/
@@ -255,3 +255,8 @@ data/additional_data_16k/*
 data/prepare_collao_cpt.py
 eval_cpt_collao.sh
 finetune_cpt_collao.sh
+
+# shared task: test audio and generated manifests/submissions
+data/test/
+data/manifests/sharedtask*/
+submission/

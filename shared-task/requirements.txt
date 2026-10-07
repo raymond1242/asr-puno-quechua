@@ -1,0 +1,17 @@
+# SIMBig 2026 Task 1 pipeline.
+# On the GPU box install torch first, matched to your CUDA:
+#   pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu124
+torch>=2.4
+torchaudio>=2.4
+transformers>=4.45
+accelerate>=0.34
+jiwer>=3.0
+soundfile>=0.12
+librosa>=0.10
+scipy>=1.11
+pandas>=2.0
+numpy>=1.26
+requests>=2.31
+python-dotenv>=1.0
+tqdm>=4.66
+safetensors>=0.4
