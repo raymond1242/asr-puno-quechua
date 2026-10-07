@@ -16,8 +16,11 @@ scripted and loses on spontaneous is not a win.
 
 ## 1. A dev split without sentence overlap
 
-**Status:** decided to keep the current speaker-disjoint split, matching the
-paper. This is the follow-up experiment, not a replacement.
+**Status (2026-10-07): settled — the overlap is NOT realistic.** The test's
+read sentences are new (HANDOFF finding A), so the speaker-only dev flatters
+any model that remembers sentences. Use `--split_by both` (speaker- AND
+text-disjoint) to select checkpoints and LM weights. The text below is the
+original reasoning, kept for the record.
 
 **The situation.** 22,727 recordings come from only 2,067 sentences, each read
 by roughly 11 people. So every sentence in `dev_scripted` also appears in
@@ -89,6 +92,13 @@ Fine-tune on each and compare spontaneous WER. Decide on the number.
 ---
 
 ## 3. Beam search with a subword language model
+
+**Status (2026-10-07): done.** `ctc_lm.py`, `06_build_lm.py`, `07_tune_lm.py`;
+`--lm_config` on `04_evaluate.py` and `05_predict.py`. Measured gain on new
+sentences: scripted 8.72 -> 7.94 WER, spontaneous 9.83 -> 9.11 (HANDOFF
+finding E). Character n-grams with flashlight's lexicon-free decoder rather
+than pyctcdecode, which scores its LM only at word ends. Smaller than hoped:
+on new sentences the LM can fix morphology, not recall the sentence.
 
 **The biggest expected win, and the cheapest.**
 
