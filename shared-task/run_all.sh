@@ -77,9 +77,11 @@ if should_run convert; then
     mkdir -p checkpoints/ft_cpt_silver
     if [[ ! -f checkpoints/ft_cpt_silver/checkpoint_best.pt ]]; then
       echo "downloading the fairseq checkpoint (~3.6 GB)"
-      curl -L --retry 10 --retry-delay 5 -C - \
-        -o checkpoints/ft_cpt_silver/checkpoint_best.pt \
-        "https://huggingface.co/QuechuaBase/xls-r-cpt-qxp-silver/resolve/main/checkpoint_best.pt"
+      # huggingface_hub ships with transformers and resumes on its own; curl
+      # is not installed on every box.
+      $PY -c "from huggingface_hub import hf_hub_download; hf_hub_download(
+        'QuechuaBase/xls-r-cpt-qxp-silver', 'checkpoint_best.pt',
+        local_dir='checkpoints/ft_cpt_silver')"
     fi
     $PY eval/hf/convert_fairseq_w2v2.py \
       --ckpt checkpoints/ft_cpt_silver/checkpoint_best.pt \

@@ -34,7 +34,10 @@ across by hand.
 | `01_build_manifests.py` | Builds train/dev/heldout. Joins the organisers' curated reference, folds text to their orthography, enforces the split rules. |
 | `03_train.py` | CTC fine-tuning. Resumable, batches by audio duration, evaluates both domains. |
 | `04_evaluate.py` | WER and CER for scripted and spontaneous, plus the mean the ranking uses. |
-| `05_predict.py` | Transcribes the test audio into `qxp.tsv` + `qxp.zip`. |
+| `05_predict.py` | Transcribes the test audio into `qxp.tsv` + `qxp.zip`. `--lm_config` decodes with the LM, per test-clip type. |
+| `06_build_lm.py` | Character n-gram LMs (ARPA) from `train.tsv` text, one per text source. |
+| `07_tune_lm.py` | Caches dev log-probabilities once, grid-searches LM / alpha / beta per domain on all CPU cores. |
+| `ctc_lm.py` | The ARPA writer (modified Kneser-Ney) and the beam-search decoder the scripts share. |
 | `IMPROVEMENTS.md` | Ideas not yet tried, each with what to measure. |
 
 ## What the ranking actually rewards
@@ -121,6 +124,21 @@ python shared-task/05_predict.py \
 
 `--template` makes the organisers' own `qxp.tsv` drive the file list and row
 order, and fails loudly if any listed file is missing rather than dropping it.
+
+With the LM (scripted and spontaneous clips get their own LM and weights,
+from the `type` column of `qxp_test_dataset.tsv`):
+
+```bash
+python shared-task/05_predict.py \
+    --model checkpoints/hf/ft_curated \
+    --audio_dir data/test/qxp_test_dataset/audios \
+    --template data/test/qxp_test_dataset/qxp.tsv \
+    --lm_config checkpoints/lm/submission_v1.json \
+    --out submission/<name>/qxp
+```
+
+Keep each candidate in its own directory: the zip must hold a file named
+exactly `qxp.tsv`, and the stem of `--out` becomes that name.
 
 The TSV is written by hand rather than through `csv`: every dialect either
 quotes the apostrophes that are part of Quechua spelling or escapes something
