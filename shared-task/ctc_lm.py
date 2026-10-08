@@ -199,6 +199,7 @@ class CTCBeamDecoder:
             criterion_type=CriterionType.CTC,
         )
         self._lm = lm  # keep alive: the decoder holds a raw pointer to it
+        self.has_lm = bool(lm_path)
         self.decoder = LexiconFreeDecoder(opts, lm, self.sil, self.blank, [])
 
     def decode(self, logprobs):
