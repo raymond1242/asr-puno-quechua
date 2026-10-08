@@ -158,7 +158,8 @@ def main():
             sys.exit(f"{len(unknown)} clips have no type in {meta} or no LM for "
                      f"their type, e.g. {unknown[:3]}")
         for d, n in pd.Series([domain_of[p.name] for p in paths]).value_counts().items():
-            print(f"LM    : {d:<12} {n} clips, beam search + LM")
+            how = "beam search + LM" if decoders[d].has_lm else "no LM (greedy path)"
+            print(f"LM    : {d:<12} {n} clips, {how}")
 
     rows, failures, total_s = [], [], 0.0
     t0 = time.time()

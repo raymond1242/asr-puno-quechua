@@ -165,8 +165,8 @@ def main():
     print(f"Model      : {args.model} ({config.model_type}) on {device}")
     print(f"Manifests  : {man}  split={args.split}")
     for domain in domains:
-        print(f"Decoding   : {domain:<12} "
-              + ("beam search + LM" if domain in decoders else "greedy"))
+        lm = domain in decoders and decoders[domain].has_lm
+        print(f"Decoding   : {domain:<12} " + ("beam search + LM" if lm else "greedy"))
     print()
 
     results, t0 = {}, time.time()
