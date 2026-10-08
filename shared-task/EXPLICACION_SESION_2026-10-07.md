@@ -61,9 +61,14 @@ WER; (2) lanzar el entrenamiento por defecto y comprobar si se recuperan los
    y la mitad spontaneous del test son solo mayores. No podemos medir bien esa
    mitad del ranking (sección 9).
 
-**Entregas generadas (no subidas):**
-`submission/ckpt500_lm/qxp.zip` (recomendada, con LM) y `submission/qxp.zip`
-(greedy). Ambas con el modelo del paso 500.
+**Entregas generadas (no subidas), todas con el modelo del paso 500:**
+`submission/ckpt500_lm_v2/qxp.zip` (**recomendada**: LM con α y β robustos,
+sección 8.4), `submission/ckpt500_lm/qxp.zip` (LM, primera configuración) y
+`submission/qxp.zip` (greedy).
+
+**Actualización tras el run `both_s2000`** (sección 8): con frases y hablantes
+nuevos, el entrenamiento óptimo es de **250 pasos o menos**, y la configuración
+del LM se cambió a una más robusta (α 0,5, β 0).
 
 ---
 
@@ -705,8 +710,9 @@ Tres de los cuatro números mejoran y uno empeora muy poco. Media: 9,28 / 2,15 �
 
 ### 7.5 Las entregas
 
-- **`submission/ckpt500_lm/qxp.zip`**: paso 500 + LM. **Es la que recomiendo.**
-  Decodificar los 659 clips tardó 54 s.
+- **`submission/ckpt500_lm/qxp.zip`**: paso 500 + LM con `submission_v1.json`.
+  Decodificar los 659 clips tardó 54 s. *Superada por `ckpt500_lm_v2`
+  (sección 8.4).*
 - **`submission/qxp.zip`**: paso 500 en greedy (la generó `run_all.sh`).
 
 Ambas tienen 659 filas en el orden de la plantilla de los organizadores, y cada
@@ -756,14 +762,82 @@ Es un split **de diagnóstico**: sirve para decidir cuántos pasos entrenar y
 qué α usar en condiciones realistas. El modelo final se entrena con todos los
 datos.
 
-### 8.3 El experimento en marcha
+### 8.3 El experimento: `both_s2000`
 
 `checkpoints/hf/both_s2000`: 2.000 pasos desde el baseline sobre este split,
-evaluando cada 250 pasos (~30 min). Va a responder a: **¿en qué paso toca fondo
-el WER scripted cuando las frases son nuevas?** Con eso se decide la longitud
-del siguiente entrenamiento con todos los datos. También servirá para ajustar
-el α del LM sin que el modelo acústico haya oído las frases de dev (los LMs ya
-están construidos en `checkpoints/lm_both/`).
+evaluando cada 250 (~30 min). La pregunta era: **¿en qué paso toca fondo el
+WER scripted cuando las frases son nuevas?**
+
+| Paso | Scripted WER / CER | Spontaneous WER / CER | Media WER |
+|---|---|---|---|
+| **250** | **4,60 / 0,63** | **9,83 / 1,44** | **7,22** |
+| 500 | 4,90 / 0,62 | 11,07 / 1,58 | 7,99 |
+| 750 | 5,27 / 0,69 | 10,04 / 1,44 | 7,66 |
+| 1000 | 5,87 / 0,75 | 10,69 / 1,53 | 8,28 |
+| 1500 | 5,27 / 0,67 | 10,00 / 1,43 | 7,63 |
+| 2000 | 5,42 / 0,70 | 10,02 / 1,41 | 7,72 |
+
+**Cómo leerlo:**
+
+- **El mejor punto es la primera evaluación (paso 250)**, así que el óptimo
+  real puede estar incluso antes. Con frases nuevas, el warm start necesita
+  todavía menos entrenamiento que en el split normal. Encaja con la idea de la
+  sección 4: lo que hay que aprender es la ortografía, y eso se aprende enseguida.
+- **Las cifras absolutas no se pueden comparar con las del dev normal.** Que
+  aquí salga 4,60 y allí 8,74 **no** significa que las frases nuevas sean más
+  fáciles. Este dev tiene solo **4 hablantes y 1.347 palabras** (cada punto de
+  WER son ~13 palabras) y no incluye al hablante `e990fbdf`, cuyo 106 % de WER
+  infla el dev normal. La diferencia viene sobre todo de **quién habla**. Lo que
+  sí es comparable es la **forma de la curva** dentro del mismo split.
+- **Este run todavía no responde cuánto memoriza el modelo acústico.** Para
+  eso hace falta un experimento A/B sobre este mismo dev: entrenar (A) como
+  ahora y (B) añadiendo los clips cruzados que se descartaron (hablantes de
+  train leyendo las frases de dev). Si B sale mucho mejor que A en el mismo
+  dev, esa diferencia es lo que "haber oído la frase" infla la medida del dev
+  normal.
+
+### 8.4 El LM en la condición limpia, y la elección robusta de α y β
+
+Con este modelo, el modelo acústico no ha oído las frases de dev y los LMs de
+`checkpoints/lm_both/` tampoco las contienen. Es la medida más parecida al test:
+
+| | Scripted WER / CER | Spontaneous WER / CER |
+|---|---|---|
+| greedy | 4,60 / 0,63 | 9,83 / 1,44 |
+| mejor LM del grid | **4,16 / 0,57** (`scripted_o8`, α 0,5, β −1) | **9,35 / 1,39** (`spont_all_o8`, α 0,25, β 0) |
+
+El LM sigue ayudando, y en esta condición **también mejora el CER scripted**.
+Pero los mejores α y β **cambiaron respecto al modelo del paso 500**:
+
+- En spontaneous, la configuración de `submission_v1` (α 0,5, β 1) ganaba
+  0,72 puntos de WER con el modelo del paso 500 y **0,00** con este.
+- En scripted, el óptimo bajó de α 0,625 a 0,5.
+
+**Por qué no persigo el óptimo de cada grid.** Con devs de 260 o 339 clips,
+diferencias de 0,2–0,3 puntos son unas pocas palabras: es **ruido**. Si cada vez
+se elige el máximo exacto del grid, se está ajustando al ruido de ese dev
+concreto (sobreajuste de hiperparámetros). La alternativa es elegir la
+configuración **robusta**: la que tiene mejor ganancia **en el peor caso** entre
+los dos modelos medidos (paso 500 con LM `_nodev`, y `both_s2000`).
+
+Resultado: **α 0,5 y β 0 en los dos dominios**:
+
+| | Ganancia WER (modelo paso 500 / both_s2000) | Ganancia CER |
+|---|---|---|
+| Scripted | +0,57 / +0,30 | −0,08 / +0,05 |
+| Spontaneous | +0,41 / +0,14 | +0,02 / 0,00 |
+
+(La ganancia es greedy menos LM, así que positivo = mejora.)
+
+Es una ganancia modesta pero **consistente**: nunca empeora el WER, y el CER se
+mueve en ±0,08. Además, usar el mismo α y β en los dos dominios es más fácil de
+justificar en el paper. Una regla clara que sale de todo esto: **α ≥ 1 empeora
+siempre** que las frases son nuevas.
+
+Esta configuración está en `checkpoints/lm/submission_v2.json`, y el candidato
+correspondiente en **`submission/ckpt500_lm_v2/qxp.zip`**. Cambia 29
+transcripciones respecto a v1 y 136 de 659 respecto a greedy. **Es ahora el
+candidato recomendado**, en lugar de `ckpt500_lm`.
 
 ---
 
@@ -825,9 +899,11 @@ preguntar a los organizadores.
 
 - `checkpoints/hf/ft_curated/`: modelo final (paso 500). Copia en `checkpoints/snap/checkpoint-500/`.
 - `checkpoints/lm/*.arpa`, `checkpoints/lm_both/*.arpa`: los LMs.
-- `checkpoints/lm/submission_v1.json`: **la configuración de la entrega**.
-  Recomiendo copiarla a `shared-task/` para que quede versionada, porque sin
-  ella la entrega no es reproducible.
+- `checkpoints/lm/submission_v2.json` (y `submission_v1.json`): **las
+  configuraciones de las entregas**. Recomiendo copiarlas a `shared-task/` para
+  que queden versionadas, porque sin ellas la entrega no es reproducible (al
+  usarlas desde ahí, pasa `--lm_dir checkpoints/lm`).
+- `checkpoints/hf/both_s2000/`: el modelo del split disjunto (paso 250).
 - `checkpoints/lm/tune__*.csv`: todas las combinaciones probadas, con su WER y CER.
 - `checkpoints/emissions/*.pkl`: la caché de emisiones.
 - `logs/`: todos los logs (descargas, entrenamientos, ajustes).
@@ -838,9 +914,12 @@ preguntar a los organizadores.
 
 ## 11. Decisiones abiertas y próximos pasos
 
-1. **Duración del entrenamiento.** Leer la curva del run `both_s2000` y
-   reentrenar con todos los datos durante los pasos que indique, con un
-   calendario de LR acorde. Cada 500 pasos cuestan unos 7 minutos.
+1. **Duración del entrenamiento.** El run `both_s2000` sitúa el óptimo en 250
+   pasos o menos. Siguiente: barrer entre 100 y 300 pasos con evaluaciones cada
+   50 y reentrenar con todos los datos usando `--max_steps` igual al óptimo, para
+   que el calendario de LR (warmup y bajada) se ajuste a esa duración. Cada 250
+   pasos cuestan unos 4 minutos.
+1b. **Medir la memorización** con el experimento A/B de la sección 8.3.
 2. **Silver sí o no.** El mismo run corto con `--no_silver`. Ojo: el dev
    spontaneous no puede mostrar el efecto en personas mayores.
 3. **Reajustar el LM** sobre el modelo que salga del punto 1, idealmente con los

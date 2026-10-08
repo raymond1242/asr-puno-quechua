@@ -18,7 +18,7 @@ Reserve the last three days for the paper.
 | Baseline | Reproduced on the GPU box: 13.15 / 2.58, identical to the Mac. |
 | Trained | Default run done; **best is step 500** (mean 9.28 WER), it overfits after. |
 | LM | Character n-gram + beam search built and tuned: ~0.8 WER per domain, honestly measured. |
-| Candidate | `submission/ckpt500_lm/qxp.zip` — step 500 + LM. Valid format, not yet submitted. |
+| Candidate | `submission/ckpt500_lm_v2/qxp.zip` — step 500 + LM (`submission_v2.json`). Valid format, not yet submitted. |
 
 Update 2026-10-07 (GPU box). Read **Findings from the GPU box** first: two of
 them overturn assumptions below (the test's read sentences are new; the
@@ -125,6 +125,35 @@ Scripted: `scripted_nodev_o6`, alpha 0.625, beta 0 (new-sentence condition).
 Spontaneous: `spont_all_o8`, alpha 0.5, beta 1 — silver text helps the LM
 (gold-only: 9.44). Adding spontaneous text to the scripted LM hurts (8.24-8.32)
 despite lower perplexity. Beam 128 = beam 64. Config: `checkpoints/lm/submission_v1.json`.
+
+Re-tuned on `both_s2000` (finding G), the best weights moved: spontaneous
+beta 1 gained 0.72 WER on step 500 and 0.00 there. **Use
+`checkpoints/lm/submission_v2.json`: alpha 0.5, beta 0 in both domains**, the
+setting with the best worst-case gain across the two models (scripted +0.30
+to +0.57 WER, spontaneous +0.14 to +0.41, CER within ±0.08). Optima found on
+260-clip or 339-clip devs are noise at the 0.2-point level; alpha >= 1 hurts
+everywhere once the sentences are new.
+
+### G. On the speaker+text-disjoint split, the optimum is at <= 250 steps
+
+`checkpoints/hf/both_s2000`: 2000 steps on `sharedtask_both`, eval every 250.
+
+| step | scripted WER/CER | spontaneous WER/CER | mean WER |
+|---|---|---|---:|
+| **250** | **4.60 / 0.63** | **9.83 / 1.44** | **7.22** |
+| 500 | 4.90 / 0.62 | 11.07 / 1.58 | 7.99 |
+| 1000 | 5.87 / 0.75 | 10.69 / 1.53 | 8.28 |
+| 2000 | 5.42 / 0.70 | 10.02 / 1.41 | 7.72 |
+
+The first eval is the best, so the optimum may be earlier still. Absolute
+numbers do NOT compare with the speaker-only dev: this dev is 4 speakers and
+1,347 words (one WER point = 13 words) and lacks `e990fbdf`. With the LM
+(`checkpoints/lm_both/`, which exclude the dev sentences): scripted 4.60 ->
+4.16, spontaneous 9.83 -> 9.35.
+
+Still unmeasured: how much hearing a sentence from other speakers helps the
+acoustic model. Clean test: retrain on `sharedtask_both` plus the dropped
+crossing clips (train speakers reading dev sentences), compare on the same dev.
 
 ### F. Setup traps on the GPU box
 
@@ -256,11 +285,10 @@ Two traps it handles, both of which produce silent garbage if missed:
 
 ## Next steps, in order
 
-1. **Pick the training length on the honest split.** `checkpoints/hf/both_s2000`
-   (2000 steps on `sharedtask_both`, eval every 250) was queued behind the
-   default run. Read its curve: where does the speaker+text-disjoint scripted
-   WER bottom out? Then retrain on the full split for that many steps (a few
-   minutes per 500 steps on the 5090), with the LR schedule to match.
+1. **Pin down the training length.** Finding G puts the optimum at <= 250
+   steps. Sweep 100-300 on `sharedtask_both` with `--eval_steps 50`, then
+   retrain on the full split for that many steps, with `--max_steps` set to
+   it so the LR schedule matches. Each 250 steps is ~4 min on the 5090.
 2. **Silver or not.** Same short run with `01_build_manifests.py --no_silver`.
    Note the spontaneous dev cannot show the effect on elders (finding B).
 3. **Re-tune the LM** on the chosen model: `07_tune_lm.py` caches emissions
@@ -269,7 +297,7 @@ Two traps it handles, both of which produce silent garbage if missed:
 4. **Elders** (IMPROVEMENTS item 4): upsampling 60+ means upsampling silver.
    Decide whether that is worth it without a way to measure it.
 5. **Accents on/off** (item 2).
-6. **Submit early.** `submission/ckpt500_lm/qxp.zip` is a valid candidate now.
+6. **Submit early.** `submission/ckpt500_lm_v2/qxp.zip` is a valid candidate now.
    Keep each candidate in its own `submission/<name>/qxp.*` — the zip must
    contain a file named exactly `qxp.tsv`.
 
