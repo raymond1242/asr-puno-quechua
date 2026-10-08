@@ -244,7 +244,8 @@ def split_by_sentence(df, dev_frac, heldout_frac, seed):
     return df.text.map(lambda t: "heldout" if t in held else "dev" if t in dev else "train")
 
 
-def split_by_both(df, dev_frac, heldout_frac, seed, dev_text_frac, heldout_text_frac):
+def split_by_both(df, dev_frac, heldout_frac, seed, dev_text_frac, heldout_text_frac,
+                  train_on_dev_sentences=False):
     """Speaker- AND text-disjoint split: the condition the official test is in.
 
     The test's read sentences are not among the 2,067 we train on (see
@@ -254,10 +255,18 @@ def split_by_both(df, dev_frac, heldout_frac, seed, dev_text_frac, heldout_text_
     sentences; the crossings are dropped ("unused"). Dev size is roughly
     dev_frac x dev_text_frac of the audio, so both fractions run larger than
     in the single-axis splits.
+
+    train_on_dev_sentences is the memorisation control: train speakers'
+    readings of the dev sentences go to train instead of being dropped. Dev is
+    unchanged, so the gap between the two builds on the same dev is what
+    having heard a sentence from other speakers is worth.
     """
     spk = split_by_speaker(df, dev_frac, heldout_frac, seed)
     txt = split_by_sentence(df, dev_text_frac, heldout_text_frac, seed)
-    return pd.Series(np.where(spk == txt, spk, "unused"), index=df.index)
+    out = np.where(spk == txt, spk, "unused")
+    if train_on_dev_sentences:
+        out = np.where((spk == "train") & (txt == "dev"), "train", out)
+    return pd.Series(out, index=df.index)
 
 
 def main():
@@ -272,6 +281,9 @@ def main():
                    help="--split_by both: share of sentences reserved for dev")
     p.add_argument("--heldout_text_frac", type=float, default=0.15,
                    help="--split_by both: share of sentences reserved for heldout")
+    p.add_argument("--train_on_dev_sentences", action="store_true",
+                   help="--split_by both: memorisation control -- train on the dev "
+                        "sentences as read by train speakers (dev itself unchanged)")
     p.add_argument("--keep_accents", action="store_true",
                    help="Keep accented vowels instead of folding them (see normalize())")
     p.add_argument("--no_silver", action="store_true")
@@ -311,7 +323,8 @@ def main():
     print(f"\nScripted split (by {args.split_by})")
     if args.split_by == "both":
         scripted["split"] = split_by_both(scripted, args.dev_frac, args.heldout_frac, args.seed,
-                                          args.dev_text_frac, args.heldout_text_frac)
+                                          args.dev_text_frac, args.heldout_text_frac,
+                                          args.train_on_dev_sentences)
         unused = scripted.split == "unused"
         print(f"  {unused.sum():,} clips ({scripted.duration_s[unused].sum()/3600:.2f} h) cross "
               f"a speaker and a sentence boundary -- dropped")

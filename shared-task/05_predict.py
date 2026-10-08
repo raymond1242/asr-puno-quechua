@@ -245,7 +245,10 @@ def main():
                          f"that would corrupt the submission.")
             f.write(f"{name}\t{text}\n")
 
-    if not args.no_zip:
+    # A file that failed (e.g. CUDA out of memory) has an empty row in the TSV.
+    # Never package that: a run that lost 560 of 659 rows to an OOM once
+    # produced a valid-looking zip.
+    if not args.no_zip and not failures:
         out_zip = Path(args.out).with_suffix(".zip")
         with zipfile.ZipFile(out_zip, "w", zipfile.ZIP_DEFLATED) as zf:
             zf.write(out_tsv, arcname=out_tsv.name)
@@ -258,12 +261,14 @@ def main():
     print(f"  audio        : {total_s/60:.1f} min")
     print(f"  wall clock   : {elapsed/60:.1f} min ({total_s/max(elapsed,1e-9):.0f}x realtime)")
     print(f"  tsv          : {out_tsv}")
-    if not args.no_zip:
+    if not args.no_zip and not failures:
         print(f"  zip          : {Path(args.out).with_suffix('.zip')}")
     if failures:
         print(f"\n  {len(failures)} file(s) failed:")
         for path, err in failures[:10]:
-            print(f"    {path.name}: {err}")
+            print(f"    {path.name}: {err[:200]}")
+        sys.exit(f"\n{len(failures)} file(s) failed -- zip NOT written. "
+                 f"The TSV has empty rows for them; fix the cause and re-run.")
 
 
 if __name__ == "__main__":
