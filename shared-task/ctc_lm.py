@@ -230,12 +230,15 @@ def ctc_logprobs(model, processor, audios, device):
 
 
 def decoders_from_config(config_path, vocab, lm_dir=None):
-    """{domain: CTCBeamDecoder} from the .best.json that 07_tune_lm.py writes."""
+    """{domain: CTCBeamDecoder} from the .best.json that 07_tune_lm.py writes.
+
+    `"lm": null` decodes that domain with no LM, which is the greedy best path.
+    """
     config_path = Path(config_path)
     lm_dir = Path(lm_dir) if lm_dir else config_path.parent
     cfg = json.loads(config_path.read_text())
     return {
-        domain: CTCBeamDecoder(vocab, lm_path=lm_dir / f"{c['lm']}.arpa",
+        domain: CTCBeamDecoder(vocab, lm_path=lm_dir / f"{c['lm']}.arpa" if c.get("lm") else None,
                                lm_weight=float(c["alpha"]), sil_score=float(c["beta"]),
                                beam=int(c["beam"]))
         for domain, c in cfg.items()
