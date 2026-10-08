@@ -16,9 +16,9 @@ Reserve the last three days for the paper.
 | Data | Scripted 27.0 + Spontaneous 5.0 downloaded, manifests built and verified. |
 | Test set | Received: 659 clips. **Not downloadable — copy it across by hand.** |
 | Baseline | Reproduced on the GPU box: 13.15 / 2.58, identical to the Mac. |
-| Trained | Default run done; **best is step 500** (mean 9.28 WER), it overfits after. |
-| LM | Character n-gram + beam search built and tuned: ~0.8 WER per domain, honestly measured. |
-| Candidate | `submission/ckpt500_lm_v2/qxp.zip` — step 500 + LM (`submission_v2.json`). Valid format, not yet submitted. |
+| Trained | **`checkpoints/hf/final_n500_lr2e-5`**: 500 steps, LR 2e-5 (findings C, G, H). |
+| LM | Character n-gram + beam search. On the final recipe it helps spontaneous only (finding J). |
+| Candidate | **`submission/final_n500_lr2e-5_v3/qxp.zip`** — final model, scripted greedy, spontaneous + LM (`submission_v3.json`). Valid, not yet submitted. Dev (speaker-only, optimistic for scripted): 9.23 / 3.01 scripted, 9.06 / 1.30 spontaneous. |
 
 Update 2026-10-07 (GPU box). Read **Findings from the GPU box** first: two of
 them overturn assumptions below (the test's read sentences are new; the
@@ -151,7 +151,7 @@ numbers do NOT compare with the speaker-only dev: this dev is 4 speakers and
 (`checkpoints/lm_both/`, which exclude the dev sentences): scripted 4.60 ->
 4.16, spontaneous 9.83 -> 9.35.
 
-### H. Steps and LR (2026-10-08): 500 steps at LR 2e-5
+### H. Steps and LR (2026-10-08): a broad plateau, 250-1000 steps
 
 `shared-task/experiments/2026-10-08_steps_and_memorisation.sh`. Each run ends
 its own LR schedule, eval on the `sharedtask_both` dev only:
@@ -163,12 +163,17 @@ its own LR schedule, eval on the `sharedtask_both` dev only:
 | 250 steps (seeds 42, 43) | 5.20, 4.97 | 9.28, 9.47 | 7.24, 7.22 |
 | 300 steps | 5.12 / 0.67 | 9.47 / 1.38 | 7.30 / 1.03 |
 | 500 steps | 4.97 / 0.66 | 9.73 / 1.39 | 7.35 / 1.03 |
-| **500 steps, LR 2e-5** | **4.60 / 0.57** | **9.32 / 1.29** | **6.96 / 0.93** |
+| 500 steps, LR 2e-5 (seeds 42, 43) | 4.60, 4.97 | 9.32, 9.54 | 6.96, 7.26 |
+| 1000 steps, LR 2e-5 | 4.83 / 0.60 | 9.64 / 1.33 | 7.23 / 0.96 |
+| 1000 steps, LR 1e-5 | 4.90 / 0.64 | 9.42 / 1.31 | 7.16 / 0.98 |
 
-At LR 5e-5 there is a plateau from 250 to 500 steps; the lower LR wins all four
-numbers. Seed noise is ~±0.25 on scripted WER, so the margin is real but thin.
-The submission model `checkpoints/hf/final_n500_lr2e-5` uses this recipe on the
-full speaker split. On the (optimistic) speaker-only dev it scores 9.23 / 3.01
+Every run from 250 to 1000 steps, LR 1e-5 to 5e-5, lands at 7.1-7.3 mean WER:
+within seed noise (the two seeds of one recipe differ by 0.30). The first seed
+of LR 2e-5 (6.96) looked like a winner; the second (7.26) says it was luck.
+What matters is not training 8000 steps. The submission model
+`checkpoints/hf/final_n500_lr2e-5` (500 steps, LR 2e-5, full speaker split)
+sits on the plateau; no reason to retrain it. Seed noise this size is what
+model averaging (IMPROVEMENTS item 7) removes — the cheapest remaining gain. On the (optimistic) speaker-only dev it scores 9.23 / 3.01
 scripted, 9.52 / 1.32 spontaneous — scripted lower than step 500 of the default
 run (8.74), as expected: that run's higher LR memorises the shared sentences
 more, which that dev rewards (finding I).
@@ -341,26 +346,31 @@ Two traps it handles, both of which produce silent garbage if missed:
 
 ## Next steps, in order
 
-1. **Done 2026-10-08**: steps and LR (finding H), memorisation (I), LM on the
-   final recipe (J). Submission model: `checkpoints/hf/final_n500_lr2e-5` +
-   `submission_v3.json`. Still running at the time of writing: a second seed of
-   the winner and 1000 steps at LR 2e-5 / 1e-5
-   (`experiments/2026-10-08_final_and_lr.sh`).
-1b. **Train on dev too?** The final model could add `dev_scripted`,
+Done 2026-10-08: steps and LR (finding H), memorisation (I), the LM on the
+final recipe (J). Current submission: `submission/final_n500_lr2e-5_v3/qxp.zip`.
+
+1. **Submit it.** It is valid now (659 rows, none empty, `qxp.tsv` inside).
+   Keep each later candidate in its own `submission/<name>/qxp.*`.
+2. **Model averaging** (IMPROVEMENTS item 7): seed noise is ~0.3 mean WER, so
+   averaging the logits of 3-5 seeds of the final recipe should be a real gain.
+   Each seed is ~7 min. Measure on `sharedtask_both` first.
+3. **Train on dev too?** The final model could add `dev_scripted`,
    `heldout_scripted` and `dev_spontaneous` (260 gold clips — gold spontaneous
    is scarce). Never `heldout_spontaneous`: those are the organisers' `test`
-   clips (decision 3 in `01_build_manifests.py`).
-2. **Silver or not.** Same short run with `01_build_manifests.py --no_silver`.
-   Note the spontaneous dev cannot show the effect on elders (finding B).
-3. **Re-tune the LM** on the chosen model: `07_tune_lm.py` caches emissions
-   (~45 s GPU), the grid is CPU. For scripted use `_nodev` LMs or LMs built
-   on `sharedtask_both` (`06_build_lm.py --manifest_dir ... --out_dir checkpoints/lm_both`).
-4. **Elders** (IMPROVEMENTS item 4): upsampling 60+ means upsampling silver.
+   clips (decision 3 in `01_build_manifests.py`). Nothing left to select on
+   afterwards, so do it last.
+4. **Silver or not.** Same short run with `01_build_manifests.py --no_silver`.
+   The spontaneous dev cannot show the effect on elders (finding B).
+5. **Elders** (IMPROVEMENTS item 4): upsampling 60+ means upsampling silver.
    Decide whether that is worth it without a way to measure it.
-5. **Accents on/off** (item 2).
-6. **Submit early.** `submission/ckpt500_lm_v2/qxp.zip` is a valid candidate now.
-   Keep each candidate in its own `submission/<name>/qxp.*` — the zip must
-   contain a file named exactly `qxp.tsv`.
+6. **Accents on/off** (item 2).
+7. **The paper.** Reserve the last three days. Findings A, C, D, I and the
+   plateau of H are results in their own right.
+
+Re-tuning the LM on a new model: `07_tune_lm.py` caches emissions (~45 s GPU),
+the grid is CPU. For scripted use LMs that exclude the dev sentences
+(`checkpoints/lm_both/` with `--manifest_dir data/manifests/sharedtask_both`).
+Never run it, or `05_predict.py`, next to a training run (finding K).
 
 Full list with what to measure: `shared-task/IMPROVEMENTS.md`.
 

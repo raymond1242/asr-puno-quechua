@@ -27,6 +27,7 @@ un hecho comprobado, lo digo explícitamente.
 11. [Decisiones abiertas y próximos pasos](#11-decisiones-abiertas-y-próximos-pasos)
 12. [Glosario](#12-glosario)
 13. [Preguntas para profundizar con una IA](#13-preguntas-para-profundizar-con-una-ia)
+14. [Segunda parte (8 de octubre): pasos, LR, memorización y la entrega final](#14-segunda-parte-8-de-octubre-pasos-lr-memorización-y-la-entrega-final)
 
 ---
 
@@ -66,9 +67,12 @@ WER; (2) lanzar el entrenamiento por defecto y comprobar si se recuperan los
 sección 8.4), `submission/ckpt500_lm/qxp.zip` (LM, primera configuración) y
 `submission/qxp.zip` (greedy).
 
-**Actualización tras el run `both_s2000`** (sección 8): con frases y hablantes
-nuevos, el entrenamiento óptimo es de **250 pasos o menos**, y la configuración
-del LM se cambió a una más robusta (α 0,5, β 0).
+**Actualización del 8 de octubre (sección 14), que sustituye a lo anterior:**
+la entrega recomendada es ahora **`submission/final_n500_lr2e-5_v3/qxp.zip`**
+(modelo de 500 pasos con LR 2e-5; scripted sin LM y spontaneous con LM). Entre
+250 y 1.000 pasos hay una meseta: todas las recetas empatan dentro del ruido
+entre semillas. Haber oído las frases de dev infla el WER scripted del dev
+normal en ~1,1 puntos (−21 %).
 
 ---
 
@@ -895,7 +899,26 @@ preguntar a los organizadores.
 | `shared-task/07_tune_lm.py` | Caché de emisiones y grid search de LM / α / β. |
 | `shared-task/EXPLICACION_SESION_2026-10-07.md` | Este documento. |
 
+**Cambios del 8 de octubre** (sección 14):
+
+| Archivo | Cambio |
+|---|---|
+| `shared-task/01_build_manifests.py` | `--train_on_dev_sentences` (el control de memorización, condición B). |
+| `shared-task/05_predict.py` | No escribe el zip si falla algún archivo y termina con error; el log dice si cada dominio usa LM o no. |
+| `shared-task/ctc_lm.py` | `"lm": null` en la configuración (= greedy); atributo `has_lm`. |
+| `shared-task/04_evaluate.py` | El log dice "greedy" para los dominios sin LM. |
+| `shared-task/experiments/*.sh` | **Nuevos** (ya en git): los comandos exactos de todos los runs del 8 de octubre. |
+| `shared-task/HANDOFF.md` | Hallazgos H–K y próximos pasos reescritos. |
+
 **Lo que no va a git** (está en el `.gitignore`), pero conviene saber dónde está:
+
+- `checkpoints/hf/final_n500_lr2e-5/`: **el modelo de la entrega actual**.
+- `checkpoints/lm/submission_v3.json`: **la configuración de la entrega actual**.
+- `checkpoints/hf/exp/`: los 14 modelos de los experimentos del 8 de octubre
+  (cada uno con su `dev_metrics.json`). Ocupan ~5 GB cada uno contando el
+  checkpoint con el estado del optimizador; se pueden borrar los
+  `checkpoint-*` internos si hace falta espacio.
+- `data/manifests/sharedtask_both_devtext/` y `..._devtext_eq/`: los splits B y B_eq.
 
 - `checkpoints/hf/ft_curated/`: modelo final (paso 500). Copia en `checkpoints/snap/checkpoint-500/`.
 - `checkpoints/lm/*.arpa`, `checkpoints/lm_both/*.arpa`: los LMs.
@@ -1028,3 +1051,191 @@ Pásale este documento entero y pregúntale cosas como estas:
 - Si solo hay 2 h de audio de personas mayores (todo silver), ¿qué técnicas de
   adaptación existen (perturbación de velocidad, aumento de datos, adaptación
   al hablante)?
+
+---
+
+## 14. Segunda parte (8 de octubre): pasos, LR, memorización y la entrega final
+
+Esta sección cuenta lo que se hizo después de escribir el resto del documento.
+**Algunas conclusiones de las secciones 7 y 8 cambian aquí**; cuando una cosa
+contradice a otra, vale lo de esta sección.
+
+### 14.1 Qué había que decidir
+
+1. **Cuántos pasos entrenar y con qué learning rate**, medido en el dev
+   disjunto en hablante y texto (el que se parece al test).
+2. **Cuánto infla el dev normal** el hecho de que el modelo haya oído las
+   frases de dev en boca de otros hablantes (sección 8.3).
+3. **Con qué configuración del LM** decodificar el modelo final.
+
+### 14.2 Cómo se diseñaron los runs, y por qué así
+
+Cada configuración es **un entrenamiento independiente que termina su propio
+calendario de LR**. La alternativa barata, entrenar una vez 2.000 pasos y
+evaluar los checkpoints intermedios (lo que hizo `both_s2000`), tiene un
+defecto: el checkpoint del paso 250 de un run de 2.000 está con el LR casi al
+máximo, a medio camino. Un run de 250 pasos, en cambio, hace el warmup, baja el
+LR hasta 0 y termina "asentado". Son modelos distintos, y lo que se quiere
+saber es cuántos pasos debe tener **el run final**.
+
+Todos parten del baseline (`ft_cpt_silver`). Los comandos están en
+`shared-task/experiments/2026-10-08_steps_and_memorisation.sh` y
+`2026-10-08_final_and_lr.sh`, para que los números del paper se puedan
+reproducir. Los modelos están en `checkpoints/hf/exp/`.
+
+### 14.3 Pasos y LR: una meseta amplia (y una conclusión que tuve que corregir)
+
+| Run | Scripted WER / CER | Spontaneous WER / CER | Media WER / CER |
+|---|---|---|---|
+| 100 pasos | 5,79 / 0,76 | 9,68 / 1,37 | 7,74 / 1,06 |
+| 150 pasos | 5,86 / 0,76 | 9,90 / 1,38 | 7,88 / 1,07 |
+| 200 pasos | 5,64 / 0,73 | 9,47 / 1,35 | 7,56 / 1,04 |
+| 250 pasos, semilla 42 | 5,20 / 0,65 | 9,28 / 1,32 | 7,24 / 0,99 |
+| 250 pasos, semilla 43 | 4,97 / 0,62 | 9,47 / 1,31 | 7,22 / 0,97 |
+| 300 pasos | 5,12 / 0,67 | 9,47 / 1,38 | 7,30 / 1,03 |
+| 500 pasos | 4,97 / 0,66 | 9,73 / 1,39 | 7,35 / 1,03 |
+| 500 pasos, LR 2e-5, semilla 42 | 4,60 / 0,57 | 9,32 / 1,29 | 6,96 / 0,93 |
+| 500 pasos, LR 2e-5, semilla 43 | 4,97 / 0,64 | 9,54 / 1,33 | 7,26 / 0,98 |
+| 1000 pasos, LR 2e-5 | 4,83 / 0,60 | 9,64 / 1,33 | 7,23 / 0,96 |
+| 1000 pasos, LR 1e-5 | 4,90 / 0,64 | 9,42 / 1,31 | 7,16 / 0,98 |
+
+(Sin indicar LR, es 5e-5, el valor por defecto.)
+
+**Qué es una "semilla" y por qué importa.** La semilla fija el azar del
+entrenamiento: el orden en que se presentan los clips y qué trozos del audio se
+enmascaran (`mask_time_prob`, una forma de aumento de datos). Con otra semilla,
+la misma receta da un modelo algo distinto. La diferencia entre dos semillas de
+la misma receta es **el ruido**: cualquier diferencia entre recetas menor que
+eso no se puede distinguir del azar.
+
+**La corrección.** Con la primera semilla, 500 pasos con LR 2e-5 parecían los
+claros ganadores (6,96, el mejor en los cuatro números), y lo dije así. La
+segunda semilla dio 7,26. **Fue en buena parte suerte.** Mirando la tabla
+entera, todo lo que está entre 250 y 1.000 pasos, con LR de 1e-5 a 5e-5, queda
+entre 7,1 y 7,3 de media, dentro de ~0,3 de ruido entre semillas.
+
+**La conclusión sólida** es que hay una **meseta amplia**: por debajo de ~200
+pasos el modelo aún no ha aprendido del todo la ortografía, y por encima de
+~1.000 empieza a sobreajustar (sección 4). Dentro de la meseta da igual. El
+modelo final (500 pasos, LR 2e-5) está dentro, así que no hace falta
+reentrenarlo. Esto ya es una lección para el paper: un único run con una
+semilla puede llevar a conclusiones falsas cuando el dev es pequeño.
+
+### 14.4 La memorización, medida
+
+**Diseño del experimento** (sección 8.3), siempre a 250 pasos y con el mismo dev:
+
+- **A**: el split disjunto normal; las frases de dev nunca están en train.
+- **B**: lo mismo, pero añadiendo a train las lecturas de las frases de dev por
+  **hablantes de train** (+3,65 h). Se construye con
+  `01_build_manifests.py --split_by both --train_on_dev_sentences`.
+- **B_eq**: B, pero quitando 3,64 h de clips de A elegidos al azar, para que
+  tenga **exactamente las mismas horas que A** (39,94 h).
+
+**Por qué hace falta B_eq.** Si B saliera mejor que A, no sabríamos si es por
+haber oído las frases o simplemente por tener más audio. B_eq iguala la
+cantidad de datos, así que la única diferencia con A es haber oído las frases.
+
+**Un detalle que apareció al construirlo.** El split marca el 15 % de las frases
+como "de dev", pero en el dev solo entran las que leyeron los 4 hablantes de
+dev (267 frases). El resto de frases marcadas se descartaban de A sin
+necesidad, y B las recupera (398 clips). No afectan a la medida, porque no
+están en el dev, pero son datos extra: otra razón más para usar B_eq.
+
+**Resultado** (dos semillas en A y B_eq):
+
+| Train | WER scripted | CER scripted |
+|---|---|---|
+| A (frases de dev nunca oídas) | 5,20 · 4,97 | 0,65 · 0,62 |
+| **B_eq** (oídas, mismas horas) | **3,79 · 4,23** | **0,48 · 0,55** |
+| B (oídas, +3,65 h; una semilla) | 4,68 | 0,60 |
+
+Los rangos de A y B_eq **no se solapan** (el peor B_eq, 4,23, es mejor que el
+mejor A, 4,97). **Haber oído las frases de dev en boca de otros hablantes baja
+el WER scripted ~1,1 puntos (−21 % relativo) y el CER ~19 %.** Ese es el sesgo
+optimista del dev normal, con número. Y probablemente crece cuanto más se
+entrena, porque memorizar es justo lo que hace el modelo al sobreajustar.
+
+Dos cosas que no sé explicar del todo y declaro como tales:
+- B (una semilla) sale peor que B_eq teniendo más datos. Con una sola semilla y
+  un ruido de ~0,4, puede ser azar.
+- En B y B_eq el WER **spontaneous** sale ~0,4 peor que en A (9,80–9,88 frente a
+  9,28–9,47), aunque los datos spontaneous son los mismos. Puede ser ruido o un
+  efecto indirecto de cambiar la mezcla de scripted; no está comprobado.
+
+### 14.5 El LM con la receta final: solo ayuda en spontaneous
+
+Reajusté el LM sobre el modelo de 500 pasos con LR 2e-5 del split disjunto
+(LMs de `checkpoints/lm_both/`, que no contienen las frases de dev). Junto con
+los dos modelos anteriores, ya son tres mediciones. Ganancia frente a greedy
+(positivo = mejora):
+
+| Configuración | Spontaneous WER (3 modelos) | Peor caso |
+|---|---|---|
+| **α 0,5, β 0** | +0,41 · +0,14 · +0,31 | **+0,14** |
+| α 0,25, β 0 | +0,07 · +0,48 · +0,38 | +0,07 |
+| α 0,5, β 1 (la de v1) | +0,72 · 0,00 · +0,14 | 0,00 |
+
+En **spontaneous**, α 0,5 / β 0 mejora en los tres modelos sin tocar el CER: es
+una ganancia pequeña pero fiable.
+
+En **scripted** la historia es otra. El mejor peor caso de todo el grid es
++0,07 de WER, y con el modelo de la receta final todas las configuraciones
+quedan en ±0,15 (unas 2 palabras). **El LM ya no aporta nada medible.** La
+explicación más probable es que cuanto mejor es el modelo acústico, menos
+errores quedan que un LM entrenado con ~2.000 frases cortas sepa corregir.
+Además, las frases del test son más largas y de otra fuente (sección 6), así que
+el LM de scripted podría incluso empujar en la dirección equivocada sin que
+podamos medirlo.
+
+**Decisión (`submission_v3.json`): scripted sin LM, spontaneous con LM**
+(`spont_all_o8`, α 0,5, β 0). Para poder expresarlo, la configuración acepta
+ahora `"lm": null`. Verifiqué que eso da exactamente lo mismo que greedy (1.493
+de 1.493 clips idénticos).
+
+### 14.6 Un incidente: una entrega rota que parecía válida
+
+Lancé la predicción del test mientras un run de refinamiento ocupaba 27 GB de
+la GPU. La inferencia se quedó **sin memoria (OOM)** en 560 de los 659 clips.
+`05_predict.py` captura los errores por lote, escribe una fila **vacía** para
+cada clip fallido y sigue, así que **generó un zip con 560 filas vacías**, con
+solo un aviso al final. Si se hubiera subido sin mirar, ese envío habría tenido
+casi 100 % de error.
+
+**El arreglo:** si falla cualquier archivo, el script ya **no escribe el zip**,
+lista los fallos y termina con código de error (deja el TSV para poder
+inspeccionarlo). Lo probé reproduciendo el OOM a propósito con la GPU ocupada:
+falló con código 1 y no escribió el zip. Borré la entrega rota y la regeneré con
+la GPU libre.
+
+**La lección práctica:** en esta tarjeta, no ejecutar inferencia (ni
+`07_tune_lm.py`) al lado de un entrenamiento.
+
+### 14.7 La entrega actual
+
+**`submission/final_n500_lr2e-5_v3/qxp.zip`**: modelo `final_n500_lr2e-5`
+(split completo, 500 pasos, LR 2e-5) con la decodificación v3. Tiene 659 filas,
+ninguna vacía, y `qxp.tsv` dentro del zip. Cambia 162 transcripciones respecto
+a `ckpt500_lm_v2`.
+
+En el dev normal (recuerda: optimista en scripted):
+
+| | Scripted WER / CER | Spontaneous WER / CER | Media |
+|---|---|---|---|
+| Paso 500 del run por defecto, greedy | 8,74 / 2,87 | 9,83 / 1,43 | 9,28 / 2,15 |
+| **Modelo final + v3** | 9,23 / 3,01 | **9,06 / 1,30** | 9,14 / 2,16 |
+
+Que scripted salga *peor* que el paso 500 aquí no es una mala señal. El paso
+500 del run largo entrenó con más LR y memorizó más las frases compartidas, que
+es justo lo que este dev premia (14.4). En el dev honesto, las recetas de la
+meseta son equivalentes y el run largo es claramente peor. Spontaneous, cuyo
+texto de dev nunca está en train, mejora.
+
+### 14.8 Lo más prometedor ahora: promediar modelos
+
+El ruido entre semillas (~0,3) es también una oportunidad. Si se entrenan 3–5
+modelos con la misma receta y distinta semilla y se **promedian sus
+log-probabilidades** antes de decodificar (*ensembling*), los errores
+aleatorios de cada uno tienden a compensarse. Es la ganancia barata que queda:
+cada semilla son ~7 minutos de GPU y la inferencia sigue siendo rápida. Hay que
+medirlo primero en el split disjunto.
