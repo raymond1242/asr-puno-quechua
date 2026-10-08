@@ -151,9 +151,65 @@ numbers do NOT compare with the speaker-only dev: this dev is 4 speakers and
 (`checkpoints/lm_both/`, which exclude the dev sentences): scripted 4.60 ->
 4.16, spontaneous 9.83 -> 9.35.
 
-Still unmeasured: how much hearing a sentence from other speakers helps the
-acoustic model. Clean test: retrain on `sharedtask_both` plus the dropped
-crossing clips (train speakers reading dev sentences), compare on the same dev.
+### H. Steps and LR (2026-10-08): 500 steps at LR 2e-5
+
+`shared-task/experiments/2026-10-08_steps_and_memorisation.sh`. Each run ends
+its own LR schedule, eval on the `sharedtask_both` dev only:
+
+| run | scripted WER/CER | spontaneous WER/CER | mean WER/CER |
+|---|---|---|---|
+| 100 steps | 5.79 / 0.76 | 9.68 / 1.37 | 7.74 / 1.06 |
+| 200 steps | 5.64 / 0.73 | 9.47 / 1.35 | 7.56 / 1.04 |
+| 250 steps (seeds 42, 43) | 5.20, 4.97 | 9.28, 9.47 | 7.24, 7.22 |
+| 300 steps | 5.12 / 0.67 | 9.47 / 1.38 | 7.30 / 1.03 |
+| 500 steps | 4.97 / 0.66 | 9.73 / 1.39 | 7.35 / 1.03 |
+| **500 steps, LR 2e-5** | **4.60 / 0.57** | **9.32 / 1.29** | **6.96 / 0.93** |
+
+At LR 5e-5 there is a plateau from 250 to 500 steps; the lower LR wins all four
+numbers. Seed noise is ~±0.25 on scripted WER, so the margin is real but thin.
+The submission model `checkpoints/hf/final_n500_lr2e-5` uses this recipe on the
+full speaker split. On the (optimistic) speaker-only dev it scores 9.23 / 3.01
+scripted, 9.52 / 1.32 spontaneous — scripted lower than step 500 of the default
+run (8.74), as expected: that run's higher LR memorises the shared sentences
+more, which that dev rewards (finding I).
+
+### I. Hearing a sentence from other speakers is worth ~1 WER point
+
+Same dev (`sharedtask_both`), 250 steps, two seeds where marked:
+
+| train | scripted WER | scripted CER |
+|---|---|---|
+| A: dev sentences never in train (39.94 h) | 5.20, 4.97 | 0.65, 0.62 |
+| B_eq: + train speakers reading them, same 39.94 h | **3.79, 4.23** | **0.48, 0.55** |
+| B: + those clips, 43.58 h (one seed) | 4.68 | 0.60 |
+
+The seed ranges of A and B_eq do not overlap: having heard the dev sentences
+from other speakers lowers scripted WER by ~1.1 points (~21% relative) and CER
+by ~19%. That is the optimism of the speaker-only dev, measured. B_eq (from B,
+minus 3.64 h of random A scripted clips) separates it from data volume.
+`01_build_manifests.py --train_on_dev_sentences` builds B.
+
+### J. On the final recipe the LM helps spontaneous only
+
+Re-tuned on `both_n500_lr2e-5` (clean LMs in `checkpoints/lm_both/`), and
+taking the worst case over the three models measured:
+
+- **Spontaneous**: `spont_all_o8`, alpha 0.5, beta 0 gains on all three
+  (+0.41, +0.14, +0.31 WER), CER unchanged.
+- **Scripted**: no setting gains measurably (best worst case +0.07 WER; on
+  the final recipe everything is within ±0.15, i.e. 2 words). The better the
+  acoustic model, the less a 2,000-short-sentence LM has to fix, and the test's
+  sentences are longer and from another source.
+
+Hence `checkpoints/lm/submission_v3.json`: scripted greedy (`"lm": null`),
+spontaneous with the LM.
+
+### K. `05_predict.py` used to zip a broken submission
+
+Inference started while a training run held 27 GB of the GPU: CUDA OOM on 560
+of 659 files. The script wrote empty rows for them and zipped the result, with
+only a warning. It now refuses to write the zip when any file fails, and exits
+non-zero. Do not run inference next to a training run on this card.
 
 ### F. Setup traps on the GPU box
 
@@ -285,10 +341,15 @@ Two traps it handles, both of which produce silent garbage if missed:
 
 ## Next steps, in order
 
-1. **Pin down the training length.** Finding G puts the optimum at <= 250
-   steps. Sweep 100-300 on `sharedtask_both` with `--eval_steps 50`, then
-   retrain on the full split for that many steps, with `--max_steps` set to
-   it so the LR schedule matches. Each 250 steps is ~4 min on the 5090.
+1. **Done 2026-10-08**: steps and LR (finding H), memorisation (I), LM on the
+   final recipe (J). Submission model: `checkpoints/hf/final_n500_lr2e-5` +
+   `submission_v3.json`. Still running at the time of writing: a second seed of
+   the winner and 1000 steps at LR 2e-5 / 1e-5
+   (`experiments/2026-10-08_final_and_lr.sh`).
+1b. **Train on dev too?** The final model could add `dev_scripted`,
+   `heldout_scripted` and `dev_spontaneous` (260 gold clips — gold spontaneous
+   is scarce). Never `heldout_spontaneous`: those are the organisers' `test`
+   clips (decision 3 in `01_build_manifests.py`).
 2. **Silver or not.** Same short run with `01_build_manifests.py --no_silver`.
    Note the spontaneous dev cannot show the effect on elders (finding B).
 3. **Re-tune the LM** on the chosen model: `07_tune_lm.py` caches emissions
