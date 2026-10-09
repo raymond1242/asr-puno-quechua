@@ -13,6 +13,10 @@ punctuation removed, apostrophe and ñ kept.
 Usage:
   python shared-task/04_evaluate.py --model checkpoints/hf/ft_curated
 
+  # an ensemble: the per-frame logits of several models, averaged (ensemble.py)
+  python shared-task/04_evaluate.py --model ckpt_a ckpt_b ckpt_c \
+      --metrics_json results/ensemble_dev.json
+
   # a different split, e.g. the text-disjoint dev from IMPROVEMENTS.md item 1
   python shared-task/04_evaluate.py --model ... \
       --manifest_dir data/manifests/sharedtask_textdisjoint
@@ -115,7 +119,8 @@ def transcribe(model, processor, paths, device, is_whisper, batch_size, language
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--model", required=True)
+    p.add_argument("--model", required=True, nargs="+",
+                   help="One model, or several CTC models to ensemble (ensemble.py)")
     p.add_argument("--manifest_dir", default=str(ROOT / "data/manifests/sharedtask"))
     p.add_argument("--split", default="dev", choices=["dev", "heldout"])
     p.add_argument("--device", default=None)
@@ -130,6 +135,12 @@ def main():
     p.add_argument("--lm_dir", default=None,
                    help="Where the LMs named in --lm_config live. "
                         "Default: the config's own directory")
+    p.add_argument("--metrics_json", default=None,
+                   help="Where to write the metrics. Default: inside the model "
+                        "directory; an ensemble has none, so give a path")
+    p.add_argument("--ensemble_fusion", default="prob", choices=["prob", "logit"],
+                   help="How several --model are combined per frame (ensemble.py): "
+                        "arithmetic mean of probabilities, or mean of logits")
     args = p.parse_args()
 
     from transformers import AutoConfig, AutoProcessor
@@ -145,14 +156,17 @@ def main():
         sys.exit(f"No {args.split}_*.tsv manifests in {man}. Run 01_build_manifests.py.")
 
     device = pick_device(args.device)
-    config = AutoConfig.from_pretrained(args.model)
+    config = AutoConfig.from_pretrained(args.model[0])
     is_whisper = config.model_type == "whisper"
-    processor = AutoProcessor.from_pretrained(args.model)
     if is_whisper:
-        from transformers import AutoModelForSpeechSeq2Seq as ModelCls
+        if len(args.model) > 1:
+            sys.exit("Ensembles are CTC-only")
+        from transformers import AutoModelForSpeechSeq2Seq
+        processor = AutoProcessor.from_pretrained(args.model[0])
+        model = AutoModelForSpeechSeq2Seq.from_pretrained(args.model[0]).to(device).eval()
     else:
-        from transformers import AutoModelForCTC as ModelCls
-    model = ModelCls.from_pretrained(args.model).to(device).eval()
+        from ensemble import load_ctc
+        model, processor = load_ctc(args.model, device, args.ensemble_fusion)
 
     decoders = {}
     if args.lm_config:
@@ -162,7 +176,8 @@ def main():
         vocab = processor.tokenizer.convert_ids_to_tokens(list(range(len(processor.tokenizer))))
         decoders = decoders_from_config(args.lm_config, vocab, args.lm_dir)
 
-    print(f"Model      : {args.model} ({config.model_type}) on {device}")
+    kind = f", {args.ensemble_fusion}-ensemble of {len(args.model)}" if len(args.model) > 1 else ""
+    print(f"Model      : {' + '.join(args.model)} ({config.model_type}{kind}) on {device}")
     print(f"Manifests  : {man}  split={args.split}")
     for domain in domains:
         lm = domain in decoders and decoders[domain].has_lm
@@ -215,7 +230,21 @@ def main():
 
     print(f"\n{time.time()-t0:.0f}s total")
 
-    out = Path(args.model) / f"metrics_{args.split}{'_lm' if decoders else ''}.json"
+    results["meta"] = {
+        "models": args.model, "manifest_dir": str(man), "split": args.split,
+        "ensemble_fusion": args.ensemble_fusion if len(args.model) > 1 else None,
+        "lm_config": args.lm_config, "limit": args.limit,
+        "decoding": {d: ("beam+LM" if d in decoders and decoders[d].has_lm else "greedy")
+                     for d in domains},
+    }
+    if args.metrics_json:
+        out = Path(args.metrics_json)
+        out.parent.mkdir(parents=True, exist_ok=True)
+    elif len(args.model) == 1:
+        out = Path(args.model[0]) / f"metrics_{args.split}{'_lm' if decoders else ''}.json"
+    else:
+        print("Ensemble metrics not saved: pass --metrics_json")
+        return
     try:
         out.write_text(json.dumps(results, indent=2))
         print(f"Saved {out}")

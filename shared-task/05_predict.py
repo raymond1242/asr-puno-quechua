@@ -97,7 +97,9 @@ def collect_audio(dirs, template=None):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--model", required=True, help="HF model directory or hub id")
+    p.add_argument("--model", required=True, nargs="+",
+                   help="HF model directory or hub id; several CTC models are "
+                        "ensembled by averaging their logits (ensemble.py)")
     p.add_argument("--audio_dir", required=True, nargs="+",
                    help="One or more directories of test audio (searched recursively)")
     p.add_argument("--template", default=None,
@@ -119,23 +121,29 @@ def main():
     p.add_argument("--metadata", default=None,
                    help="qxp_test_dataset.tsv: its `type` column picks each clip's "
                         "LM. Default: next to --template")
+    p.add_argument("--ensemble_fusion", default="prob", choices=["prob", "logit"],
+                   help="How several --model are combined per frame (ensemble.py): "
+                        "arithmetic mean of probabilities, or mean of logits")
     args = p.parse_args()
 
     from transformers import AutoConfig, AutoProcessor
 
     device = pick_device(args.device)
-    config = AutoConfig.from_pretrained(args.model)
+    config = AutoConfig.from_pretrained(args.model[0])
     is_whisper = config.model_type == "whisper"
-    processor = AutoProcessor.from_pretrained(args.model)
-
     if is_whisper:
-        from transformers import AutoModelForSpeechSeq2Seq as ModelCls
+        if len(args.model) > 1:
+            sys.exit("Ensembles are CTC-only")
+        from transformers import AutoModelForSpeechSeq2Seq
+        processor = AutoProcessor.from_pretrained(args.model[0])
+        model = AutoModelForSpeechSeq2Seq.from_pretrained(args.model[0]).to(device).eval()
     else:
-        from transformers import AutoModelForCTC as ModelCls
-    model = ModelCls.from_pretrained(args.model).to(device).eval()
+        from ensemble import load_ctc
+        model, processor = load_ctc(args.model, device, args.ensemble_fusion)
 
     paths = collect_audio(args.audio_dir, args.template)
-    print(f"Model : {args.model} ({config.model_type}) on {device}")
+    kind = f", {args.ensemble_fusion}-ensemble of {len(args.model)}" if len(args.model) > 1 else ""
+    print(f"Model : {' + '.join(args.model)} ({config.model_type}{kind}) on {device}")
     print(f"Audio : {len(paths)} files from {', '.join(map(str, args.audio_dir))}")
 
     # Beam search: each clip decodes with its own domain's LM and weights. A
