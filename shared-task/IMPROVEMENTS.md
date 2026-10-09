@@ -185,6 +185,12 @@ win, and it means a full training run from scratch.
 
 ## 7. Ensembling
 
+**Status (2026-10-09): done, negative.** Three seeds, two fusions; neither beats
+the seed spread (HANDOFF finding L). Averaging logits loses badly because CTC
+spikes of different seeds are one frame apart 14% of the time and the
+geometric mean deletes the character; averaging probabilities fixes that but
+gains nothing. The original note follows.
+
 Average the logits of two or three fine-tuned models (different seeds, or
 accents/no-accents, or 300M and 1B) before decoding. Reliable small gains,
 costs nothing but inference time, and inference here runs at 86x realtime.
