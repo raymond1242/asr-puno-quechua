@@ -259,6 +259,51 @@ of 659 files. The script wrote empty rows for them and zipped the result, with
 only a warning. It now refuses to write the zip when any file fails, and exits
 non-zero. Do not run inference next to a training run on this card.
 
+### L. Ensembling seeds does not help (2026-10-09) — negative result
+
+Three seeds (42, 43, 44) of the final recipe, per split; `ensemble.py`, wired
+into `04_evaluate.py` / `05_predict.py` (`--model a b c`). Dev, decoding v3
+(scripted greedy, spontaneous + LM); positive = ensemble better than the mean
+of the three seeds:
+
+| | scr WER | scr CER | spo WER | spo CER | mean WER | mean CER |
+|---|---:|---:|---:|---:|---:|---:|
+| seed spread (`both`, max-min) | 0.37 | 0.07 | 0.36 | 0.04 | 0.37 | 0.06 |
+| logit ensemble, `both` | -1.68 | -0.22 | -1.04 | -0.13 | -1.36 | -0.17 |
+| prob ensemble, `both` | +0.17 | +0.02 | -0.73 | -0.12 | -0.28 | -0.05 |
+| prob ensemble, `both`, greedy | +0.17 | +0.02 | -0.17 | -0.02 | +0.00 | -0.00 |
+| logit ensemble, `sharedtask` | -2.25 | -0.38 | -0.83 | -0.09 | -1.54 | -0.24 |
+| prob ensemble, `sharedtask` | -0.93 | -0.18 | -0.74 | -0.12 | -0.57 | -0.10 |
+
+Neither fusion gains more than the seed spread, in WER or CER; we submit the
+single model. Why the **logit** mean (what was first specified) loses badly —
+measured, not guessed: it is a geometric mean of the frame posteriors, CTC
+posteriors are spikes, and two seeds put the same character's spike one frame
+apart 14.4% of the time (85.5% same frame). The geometric mean needs both on the
+same frame, so the blank wins and the character is lost: character deletions
+21 -> 50 on the `both` scripted dev, substitutions and insertions unchanged.
+The arithmetic **prob** mean fixes that (deletions 23) but still gains nothing.
+Hypotheses, not tested: the members agree too closely (96.6% of frames share
+the argmax) for averaging to remove much; and with the LM the prob ensemble is
+worse than greedy on spontaneous (9.92 vs 9.56), perhaps because its flatter
+posteriors give alpha 0.5 — tuned on single models — too much weight.
+
+### M. mask_time_prob above 0.05 hurts (2026-10-09) — negative result
+
+Seed 42 on `sharedtask_both`, paired with the 0.05 run; dev, decoding v3:
+
+| mask_time_prob | scr WER/CER | spo WER/CER | mean WER/CER |
+|---|---|---|---|
+| 0.05 (unchanged) | 4.60 / 0.57 | 9.01 / 1.29 | 6.81 / 0.93 |
+| 0.2 | 5.05 / 0.66 | 9.06 / 1.30 | 7.05 / 0.98 |
+| 0.5 | 5.79 / 0.76 | 9.56 / 1.38 | 7.68 / 1.07 |
+
+Both lose all four numbers, monotonically with the mask. No seed-43 repeat
+was needed (the rule was to repeat a gain above 0.30 before believing it).
+Hypothesis: in 500 warm-started steps the model never reaches the overfitting
+that masking prevents (finding C appeared after ~500 steps of a run peaking at
+2.5x this LR), so masking only costs signal.
+
 ### F. Setup traps on the GPU box
 
 - RTX 50xx (sm_120) needs torch **cu128**; the cu124 the requirements used to
