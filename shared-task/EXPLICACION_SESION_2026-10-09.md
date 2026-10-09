@@ -31,7 +31,50 @@ WER y CER en spontaneous) más su media. Nunca solo WER.
 
 ## 0. Resumen en una página
 
-<!-- RESUMEN -->
+**Lo que se hizo:** tres semillas más de la receta final; un ensemble (dos
+formas de combinar); un barrido de `mask_time_prob`; decisiones cerradas solo
+con dev; el heldout medido una sola vez, con pre-registro; y la entrega
+regenerada y verificada.
+
+**Las decisiones** (sección 5): **modelo único**, sin ensemble;
+**`mask_time_prob` 0,05**; decodificación **v3**. Es decir, nada cambia respecto
+a la entrega del día 8, y ahora está respaldado por medidas.
+
+**Los resultados negativos**, reportados como tales:
+
+- **El ensemble no gana.** Promediando logits empeora mucho (media WER/CER
+  −1,36 / −0,17 frente a la media de semillas en el dev disjunto), por un motivo
+  medido: CTC emite picos y las semillas los colocan a veces en frames
+  contiguos, así que la media geométrica borra letras (borrados de carácter
+  21 → 50). Promediando probabilidades ya no pierde letras, pero tampoco gana:
+  en el mejor caso empata (±0,00).
+- **Más máscara empeora.** 0,2 y 0,5 pierden los cuatro números.
+
+**El heldout** (sección 6). Resultado principal, `both_n500_lr2e-5` + v3 en el
+heldout disjunto en hablante y texto:
+
+| | Scripted WER / CER | Spontaneous WER / CER | Media WER / CER |
+|---|---|---|---|
+| dev | 4,60 / 0,57 | 9,01 / 1,29 | 6,81 / 0,93 |
+| **heldout** | **10,90 / 2,35** | **3,30 / 0,38** | **7,10 / 1,37** |
+
+Las medias se parecen, pero esconden movimientos grandes y opuestos. Scripted
+empeora mucho y spontaneous mejora mucho. Casi todo es **composición**, no ajuste
+al dev:
+
+- El heldout scripted contiene a `e990fbdf`, un hablante que por sí solo sube
+  el WER scripted del dev de `sharedtask` de 5,71 a 9,23 (hecho medido; su
+  efecto en el heldout es una inferencia, no una medida).
+- El 46 % del heldout spontaneous es de hablantes cuya voz el modelo ya oyó en
+  las transcripciones silver de train.
+
+Lo que sí se puede afirmar con el heldout: la receta es estable (0,10 de rango
+entre semillas); el orden de las semillas no se mantiene de dev a heldout, lo
+que confirma que sus diferencias en dev eran ruido; y **la ganancia del LM en
+spontaneous no aparece en el heldout** (neutra).
+
+**La entrega:** `submission/final_n500_lr2e-5_v3_2026-10-09/qxp.zip`, verificada
+e idéntica byte a byte a la del día 8.
 
 ---
 
@@ -357,13 +400,160 @@ Con lo medido en los pasos 2 y 3, y solo en dev:
 
 ## 6. Paso 5: el heldout
 
-<!-- HELDOUT -->
+### 6.1 Qué es el heldout, exactamente
+
+Dos heldouts, uno por split:
+
+- **`sharedtask_both`, heldout scripted:** 364 clips, 7 hablantes, ninguno en
+  train, y ninguna frase en train. Es la medida más limpia de scripted.
+- **`sharedtask`, heldout scripted:** 1.328 clips, 3 hablantes que no están en
+  train, pero **todas sus frases sí** (diseño del paper original). Optimista,
+  como su dev.
+- **Heldout spontaneous**, el mismo en los dos splits: 279 clips, los que los
+  organizadores marcaron como `test` en el corpus spontaneous. Nunca se han
+  usado para entrenar.
+
+### 6.2 El pre-registro
+
+Escrito en la cabecera de `experiments/2026-10-09_eval_heldout.sh` antes de
+ejecutarlo, con una copia fechada en `results/2026-10-09/PREREGISTRATION_heldout_145955.sh`:
+
+- **Principal ("el resultado del paper"):** `both_n500_lr2e-5` (semilla 42)
+  + v3 en el heldout de `sharedtask_both`.
+- **Entrega:** `final_n500_lr2e-5` (semilla 42) + v3 en el heldout de `sharedtask`.
+- **Secundarias, no deciden nada:** las semillas 43 y 44 de las dos recetas
+  (dispersión en heldout) y la decodificación greedy de cada modelo (efecto
+  del LM en heldout).
+- **Nada cambia después de ver estos números.**
+
+Se ejecutó una vez (14:59–15:11). Ningún número de esta sección se ha usado para
+cambiar nada.
+
+### 6.3 Resultados (decodificación v3), junto a los de dev del mismo modelo
+
+| Modelo | Conjunto | scr WER | scr CER | spo WER | spo CER | media WER | media CER |
+|---|---|---:|---:|---:|---:|---:|---:|
+| **both s42 (principal)** | dev | 4,60 | 0,57 | 9,01 | 1,29 | 6,81 | 0,93 |
+| **both s42 (principal)** | **heldout** | **10,90** | **2,35** | **3,30** | **0,38** | **7,10** | **1,37** |
+| both s43 | dev | 4,97 | 0,64 | 9,37 | 1,33 | 7,17 | 0,99 |
+| both s43 | heldout | 10,62 | 2,32 | 3,42 | 0,40 | 7,02 | 1,36 |
+| both s44 | dev | 4,97 | 0,63 | 9,20 | 1,32 | 7,09 | 0,97 |
+| both s44 | heldout | 10,83 | 2,32 | 3,42 | 0,39 | 7,13 | 1,36 |
+| both, media ± desv. | dev | 4,85 ± 0,21 | 0,62 ± 0,04 | 9,20 ± 0,18 | 1,31 ± 0,02 | 7,02 ± 0,19 | 0,96 ± 0,03 |
+| both, media ± desv. | heldout | 10,79 ± 0,14 | 2,33 ± 0,02 | 3,38 ± 0,07 | 0,39 ± 0,01 | 7,08 ± 0,05 | 1,36 ± 0,01 |
+| **sharedtask s42 (entrega)** | dev | 9,23 | 3,01 | 9,06 | 1,30 | 9,14 | 2,16 |
+| **sharedtask s42 (entrega)** | **heldout** | **9,71** | **1,76** | **3,62** | **0,43** | **6,66** | **1,09** |
+| sharedtask s43 | dev | 9,46 | 2,99 | 9,08 | 1,28 | 9,27 | 2,13 |
+| sharedtask s43 | heldout | 9,62 | 1,77 | 3,44 | 0,40 | 6,53 | 1,08 |
+| sharedtask s44 | dev | 9,28 | 2,92 | 9,28 | 1,32 | 9,28 | 2,12 |
+| sharedtask s44 | heldout | 9,78 | 1,78 | 3,62 | 0,42 | 6,70 | 1,10 |
+| sharedtask, media ± desv. | dev | 9,32 ± 0,12 | 2,97 ± 0,05 | 9,14 ± 0,12 | 1,30 ± 0,02 | 9,23 ± 0,08 | 2,14 ± 0,02 |
+| sharedtask, media ± desv. | heldout | 9,70 ± 0,08 | 1,77 ± 0,01 | 3,56 ± 0,10 | 0,41 ± 0,02 | 6,63 ± 0,09 | 1,09 ± 0,01 |
+
+**De dev a heldout, en el modelo principal:** scripted empeora +6,30 de WER y
++1,78 de CER; spontaneous mejora −5,71 y −0,91; la media sube +0,29 / +0,44.
+**En el de entrega:** scripted +0,48 de WER pero −1,25 de CER; spontaneous
+−5,44 / −0,87; la media baja −2,48 / −1,07.
+
+Leído solo por la media, el modelo principal parecería "casi igual en
+heldout que en dev". **Sería engañoso:** los dos dominios se mueven 6 puntos en
+sentidos opuestos y se compensan por casualidad. Por eso la regla de reportar
+siempre los cuatro números.
+
+### 6.4 Por qué dev y heldout difieren tanto: composición, no (solo) ajuste
+
+Antes de atribuir la diferencia a haber ajustado el sistema al dev, comprobé
+la composición de los conjuntos **solo con metadatos**, sin volver a pasar
+ningún modelo por el heldout:
+
+| Conjunto scripted | Clips | Hablantes | ¿Contiene `e990fbdf`? | Mayor hablante |
+|---|---:|---:|---|---:|
+| `both` dev | 339 | 4 | no | 73 % de los clips |
+| `both` heldout | 364 | 7 | **sí** | 34 % |
+| `sharedtask` dev | 1.493 | 7 | **sí** | 51 % |
+| `sharedtask` heldout | 1.328 | 3 | no | 56 % |
+
+Y lo que pesa **un solo hablante**, medido en dev (se puede, porque el dev no
+está protegido), con el modelo de entrega:
+
+| Dev scripted de `sharedtask` | Clips | WER | CER |
+|---|---:|---:|---:|
+| los 7 hablantes | 1.493 | 9,23 | 3,01 |
+| sin `e990fbdf` | 1.434 | **5,71** | **0,93** |
+| solo `e990fbdf` | 59 | 98,67 | 54,06 |
+
+Con el 4 % de los clips, ese hablante sube el WER scripted 3,5 puntos y triplica
+el CER. Está en el heldout de `both` y no en su dev, lo que **muy
+probablemente** explica la mayor parte del salto de 4,60 a 10,90 de scripted.
+Digo "muy probablemente" porque verificarlo exige volver a pasar los modelos por
+el heldout guardando las predicciones, y no lo he hecho: aunque no cambiaría
+ninguna decisión, sería volver a mirar el heldout.
+
+En spontaneous, la sorpresa es la contraria: el heldout es **más fácil** (3,3
+frente a 9,0). Dos hechos medidos lo explican en parte:
+
+- **El 46 % de los clips del heldout spontaneous son de 2 hablantes que
+  tienen 82 clips en train** (74 silver y 8 pendientes). Las transcripciones
+  silver se repartieron sin mirar el hablante, así que **el heldout spontaneous
+  no es disjunto por hablante**: el modelo ya había oído esas voces. En el dev
+  esto afecta solo al 1 % de los clips.
+- Sus hablantes tienen veintitantos y treinta y tantos años, igual que los del
+  dev; ninguno se parece a los mayores de 60 del test.
+
+**Conclusión honesta:** con conjuntos de 3 a 7 hablantes, **quién habla pesa más
+que cualquier ajuste al dev**, y no se puede leer directamente "cuánto nos
+ajustamos al dev" en la diferencia entre dev y heldout.
+
+### 6.5 Lo que el heldout sí permite afirmar
+
+1. **La receta es estable.** El rango entre semillas en heldout es 0,10 de WER
+   medio en `both` y 0,17 en `sharedtask`: menor que en dev.
+2. **Las diferencias entre semillas en dev eran ruido.** El orden no se
+   mantiene: en el dev de `both` la mejor semilla era la 42 (6,81), y en heldout
+   la mejor es la 43 (7,02) y la 42 queda en medio (7,10). Lo mismo en
+   `sharedtask`. Esto confirma que no había que elegir "la mejor semilla"
+   según dev.
+3. **La ganancia del LM en spontaneous no se confirma.** En dev, el LM mejoraba
+   spontaneous en las seis semillas (entre +0,12 y +0,65 de WER). En heldout
+   es neutro: de media sale 3,47 con LM frente a 3,44 sin LM (−0,03), con el
+   mismo CER (0,40). Es la huella típica del sesgo de selección: el LM, su peso
+   y su texto se eligieron mirando el dev de spontaneous. También influye que
+   el heldout spontaneous es mucho más fácil (3,4 % de WER) y deja poco que
+   corregir. **No se cambia nada** (pre-registro), pero el paper debe
+   presentar el LM como neutro, no como una mejora.
+4. **El número principal para el paper**, con sus salvedades: heldout scripted
+   **10,90 / 2,35** (frases y hablantes nuevos, incluido el hablante más
+   difícil del corpus) y heldout spontaneous **3,30 / 0,38** (optimista: el 46 %
+   de sus clips son de voces oídas en el silver de train).
 
 ---
 
 ## 7. Paso 6: la entrega
 
-<!-- ENTREGA -->
+**El sistema:** el fijado en el paso 4. Modelo único `final_n500_lr2e-5`
+(entrenado en `sharedtask`, semilla 42) con la decodificación v3 (scripted sin
+LM, spontaneous con `spont_all_o8`, α 0,5, β 0). Comando en
+`experiments/2026-10-09_submission.sh`.
+
+**Resultado:** `submission/final_n500_lr2e-5_v3_2026-10-09/qxp.zip`.
+
+**Verificación**, hecha por separado y no a partir del resumen del script:
+
+| Comprobación | Resultado |
+|---|---|
+| Filas | 659, igual que la plantilla |
+| Campos por fila | exactamente 2 en todas |
+| Transcripciones vacías | 0 |
+| Nombres y orden | idénticos a `data/test/qxp_test_dataset/qxp.tsv` |
+| Nombres duplicados | 0 |
+| Caracteres fuera de `a–z ñ ' espacio` | ninguno |
+| Contenido del zip | solo `qxp.tsv`, idéntico al TSV en disco |
+| Fin de línea | `\n`, sin `\r` |
+| Frente a la entrega del 8 de octubre | **idéntica byte a byte** |
+
+Que sea idéntica a la del día 8 es lo esperado, porque el sistema no cambió.
+Además confirma que la inferencia es determinista: regenerar da exactamente el
+mismo archivo. No está subida.
 
 ---
 
@@ -386,6 +576,16 @@ Con lo medido en los pasos 2 y 3, y solo en dev:
   misma semilla.
 - El heldout no se había medido nunca antes de este día (comprobado buscando
   cualquier archivo de métricas o log de heldout).
+- En heldout, la dispersión entre semillas es de 0,10 (`both`) y 0,17
+  (`sharedtask`) de WER medio, y el orden de las semillas no coincide con el de dev.
+- La ganancia del LM en spontaneous de dev (+0,12 a +0,65 de WER según la
+  semilla) no aparece en heldout (−0,03 de media; CER igual).
+- El hablante `e990fbdf` (59 clips) sube el WER scripted del dev de `sharedtask`
+  de 5,71 a 9,23 y el CER de 0,93 a 3,01. Está en el heldout de `both` y no en
+  su dev.
+- El 46 % de los clips del heldout spontaneous son de hablantes con clips silver
+  en train.
+- La entrega regenerada es idéntica byte a byte a la del día 8.
 
 **Hipótesis (no comprobadas):**
 
@@ -396,6 +596,11 @@ Con lo medido en los pasos 2 y 3, y solo en dev:
 - Que la diferencia del ensemble de probabilidades entre los dos devs scripted
   (+0,17 frente a −0,93) venga del hablante `e990fbdf`.
 - Que la máscara no ayude porque la receta de 500 pasos no llega a sobreajustar.
+- Que el salto de scripted de dev a heldout en `both` (4,60 → 10,90) se deba
+  sobre todo a `e990fbdf`. Es muy probable, pero no está medido: haría falta
+  pasar de nuevo los modelos por el heldout guardando predicciones.
+- Que la ganancia del LM en dev fuera sesgo de selección y no una mejora real.
+  También puede deberse a que el heldout spontaneous es mucho más fácil.
 
 ---
 
@@ -410,6 +615,7 @@ Con lo medido en los pasos 2 y 3, y solo en dev:
 | `shared-task/experiments/2026-10-09_eval_dev.sh` | Todas las mediciones en dev (pasos 2 y 3). |
 | `shared-task/experiments/2026-10-09_eval_heldout.sh` | El heldout, con el pre-registro en la cabecera. Se niega a sobrescribir. |
 | `shared-task/experiments/collect_2026-10-09.py` | Reúne los JSON en tablas: cuatro números + medias, dispersión y deltas. |
+| `shared-task/experiments/2026-10-09_submission.sh` | El comando exacto de la entrega del paso 6. |
 | `results/2026-10-09/` | Un JSON y un log por medición (`<split>__<sistema>__<decodificación>`), y la copia del pre-registro. **No va a git** (`results/*` está en el `.gitignore`). |
 
 Para regenerar todas las tablas de este documento:
@@ -418,6 +624,9 @@ Para regenerar todas las tablas de este documento:
 python shared-task/experiments/collect_2026-10-09.py --markdown
 ```
 
+El análisis por hablante del anexo B usa las predicciones guardadas en
+`results/2026-10-09/pred_dev_st_s42_v3/`.
+
 Modelos nuevos (tampoco en git): `checkpoints/hf/exp/both_n500_lr2e-5_s44`,
 `..._mask0.2`, `..._mask0.5`, `checkpoints/hf/final_n500_lr2e-5_s43` y `_s44`.
 
@@ -425,7 +634,75 @@ Modelos nuevos (tampoco en git): `checkpoints/hf/exp/both_n500_lr2e-5_s44`,
 
 ## 10. Tabla final con todos los resultados
 
-<!-- TABLA -->
+Una fila por modelo y configuración. Todas las cifras en %. "Influyó" dice si
+ese número intervino en alguna decisión. Decodificación v3 (la del sistema)
+salvo donde se indica.
+
+| Modelo / configuración | scr WER | scr CER | spo WER | spo CER | media WER | media CER | Split (conjunto) | ¿Influyó en una decisión? |
+|---|---:|---:|---:|---:|---:|---:|---|---|
+| both s42, mask 0,05 | 4,60 | 0,57 | 9,01 | 1,29 | 6,81 | 0,93 | sharedtask_both (dev) | sí: pasos 2 (dispersión) y 3 (referencia emparejada) |
+| both s43 | 4,97 | 0,64 | 9,37 | 1,33 | 7,17 | 0,99 | sharedtask_both (dev) | sí: paso 2 (dispersión) |
+| both s44 | 4,97 | 0,63 | 9,20 | 1,32 | 7,09 | 0,97 | sharedtask_both (dev) | sí: paso 2 (dispersión) |
+| both, media de 3 semillas | 4,85 | 0,62 | 9,20 | 1,31 | 7,02 | 0,96 | sharedtask_both (dev) | sí: paso 2 (referencia del ensemble) |
+| both, desv. estándar (3 semillas) | 0,21 | 0,04 | 0,18 | 0,02 | 0,19 | 0,03 | sharedtask_both (dev) | sí: paso 2 (umbral) |
+| both, rango (máx − mín) | 0,37 | 0,07 | 0,36 | 0,04 | 0,37 | 0,06 | sharedtask_both (dev) | sí: paso 2 (umbral) |
+| both, ensemble de logits | 6,53 | 0,84 | 10,23 | 1,44 | 8,38 | 1,14 | sharedtask_both (dev) | sí: paso 2 (descartado) |
+| both, ensemble de probabilidades | 4,68 | 0,60 | 9,92 | 1,43 | 7,30 | 1,02 | sharedtask_both (dev) | sí: paso 2 (descartado) |
+| both s42, mask 0,2 | 5,05 | 0,66 | 9,06 | 1,30 | 7,05 | 0,98 | sharedtask_both (dev) | sí: paso 3 (descartado) |
+| both s42, mask 0,5 | 5,79 | 0,76 | 9,56 | 1,38 | 7,68 | 1,07 | sharedtask_both (dev) | sí: paso 3 (descartado) |
+| sharedtask s42 (entrega) | 9,23 | 3,01 | 9,06 | 1,30 | 9,14 | 2,16 | sharedtask (dev) | sí: paso 2 (dispersión) |
+| sharedtask s43 | 9,46 | 2,99 | 9,08 | 1,28 | 9,27 | 2,13 | sharedtask (dev) | sí: paso 2 (dispersión) |
+| sharedtask s44 | 9,28 | 2,92 | 9,28 | 1,32 | 9,28 | 2,12 | sharedtask (dev) | sí: paso 2 (dispersión) |
+| sharedtask, media de 3 semillas | 9,32 | 2,97 | 9,14 | 1,30 | 9,23 | 2,14 | sharedtask (dev) | sí: paso 2 (referencia) |
+| sharedtask, desv. estándar | 0,12 | 0,05 | 0,12 | 0,02 | 0,08 | 0,02 | sharedtask (dev) | sí: paso 2 |
+| sharedtask, rango | 0,23 | 0,09 | 0,22 | 0,04 | 0,13 | 0,04 | sharedtask (dev) | sí: paso 2 |
+| sharedtask, ensemble de logits | 11,57 | 3,36 | 9,97 | 1,39 | 10,77 | 2,37 | sharedtask (dev) | sí: paso 2 (descartado) |
+| sharedtask, ensemble de probabilidades | 10,25 | 3,15 | 9,88 | 1,41 | 10,06 | 2,28 | sharedtask (dev) | sí: paso 2 (descartado) |
+| **both s42 (principal)** | **10,90** | **2,35** | **3,30** | **0,38** | **7,10** | **1,37** | sharedtask_both (**heldout**) | **no**: medido una vez, después de decidir |
+| both s43 | 10,62 | 2,32 | 3,42 | 0,40 | 7,02 | 1,36 | sharedtask_both (heldout) | no |
+| both s44 | 10,83 | 2,32 | 3,42 | 0,39 | 7,13 | 1,36 | sharedtask_both (heldout) | no |
+| both, media de 3 semillas | 10,79 | 2,33 | 3,38 | 0,39 | 7,08 | 1,36 | sharedtask_both (heldout) | no |
+| both, desv. estándar | 0,14 | 0,02 | 0,07 | 0,01 | 0,05 | 0,01 | sharedtask_both (heldout) | no |
+| **sharedtask s42 (entrega)** | **9,71** | **1,76** | **3,62** | **0,43** | **6,66** | **1,09** | sharedtask (**heldout**) | **no** |
+| sharedtask s43 | 9,62 | 1,77 | 3,44 | 0,40 | 6,53 | 1,08 | sharedtask (heldout) | no |
+| sharedtask s44 | 9,78 | 1,78 | 3,62 | 0,42 | 6,70 | 1,10 | sharedtask (heldout) | no |
+| sharedtask, media de 3 semillas | 9,70 | 1,77 | 3,56 | 0,41 | 6,63 | 1,09 | sharedtask (heldout) | no |
+| sharedtask, desv. estándar | 0,08 | 0,01 | 0,10 | 0,02 | 0,09 | 0,01 | sharedtask (heldout) | no |
+
+**Anexo A: las mismas mediciones con decodificación greedy (sin LM).** En
+scripted coincide siempre con v3, porque v3 ya es greedy en scripted; solo
+cambian las columnas de spontaneous y las medias.
+
+| Modelo / configuración | scr WER | scr CER | spo WER | spo CER | media WER | media CER | Split (conjunto) | ¿Influyó? |
+|---|---:|---:|---:|---:|---:|---:|---|---|
+| both s42 | 4,60 | 0,57 | 9,32 | 1,29 | 6,96 | 0,93 | sharedtask_both (dev) | sí: paso 2, comparación sin LM |
+| both s43 | 4,97 | 0,64 | 9,54 | 1,33 | 7,26 | 0,98 | sharedtask_both (dev) | sí: paso 2 |
+| both s44 | 4,97 | 0,63 | 9,32 | 1,31 | 7,15 | 0,97 | sharedtask_both (dev) | sí: paso 2 |
+| both, ensemble de logits | 6,53 | 0,84 | 11,19 | 1,53 | 8,86 | 1,18 | sharedtask_both (dev) | sí: paso 2 |
+| both, ensemble de probabilidades | 4,68 | 0,60 | 9,56 | 1,33 | 7,12 | 0,96 | sharedtask_both (dev) | sí: paso 2 |
+| both s42, mask 0,2 | 5,05 | 0,66 | 9,37 | 1,32 | 7,21 | 0,99 | sharedtask_both (dev) | no (confirmación) |
+| both s42, mask 0,5 | 5,79 | 0,76 | 9,68 | 1,36 | 7,74 | 1,06 | sharedtask_both (dev) | no (confirmación) |
+| sharedtask s42 | 9,23 | 3,01 | 9,52 | 1,33 | 9,37 | 2,17 | sharedtask (dev) | sí: paso 2 |
+| sharedtask s43 | 9,46 | 2,99 | 9,73 | 1,33 | 9,60 | 2,16 | sharedtask (dev) | sí: paso 2 |
+| sharedtask s44 | 9,28 | 2,92 | 9,59 | 1,32 | 9,43 | 2,12 | sharedtask (dev) | sí: paso 2 |
+| sharedtask, ensemble de logits | 11,57 | 3,36 | 11,15 | 1,50 | 11,36 | 2,43 | sharedtask (dev) | sí: paso 2 |
+| sharedtask, ensemble de probabilidades | 10,25 | 3,15 | 9,83 | 1,35 | 10,04 | 2,25 | sharedtask (dev) | sí: paso 2 |
+| both s42 | 10,90 | 2,35 | 3,30 | 0,38 | 7,10 | 1,37 | sharedtask_both (heldout) | no |
+| both s43 | 10,62 | 2,32 | 3,46 | 0,40 | 7,04 | 1,36 | sharedtask_both (heldout) | no |
+| both s44 | 10,83 | 2,32 | 3,34 | 0,38 | 7,09 | 1,35 | sharedtask_both (heldout) | no |
+| sharedtask s42 | 9,71 | 1,76 | 3,56 | 0,43 | 6,63 | 1,09 | sharedtask (heldout) | no |
+| sharedtask s43 | 9,62 | 1,77 | 3,46 | 0,41 | 6,54 | 1,09 | sharedtask (heldout) | no |
+| sharedtask s44 | 9,78 | 1,78 | 3,50 | 0,41 | 6,64 | 1,10 | sharedtask (heldout) | no |
+
+**Anexo B: análisis, no sistemas.** El peso de un solo hablante en el dev
+scripted de `sharedtask` (modelo de entrega, v3). Solo scripted, porque el
+análisis es por hablante scripted.
+
+| Subconjunto | Clips | scr WER | scr CER | ¿Influyó? |
+|---|---:|---:|---:|---|
+| los 7 hablantes | 1.493 | 9,23 | 3,01 | no (análisis) |
+| sin `e990fbdf` | 1.434 | 5,71 | 0,93 | no (análisis) |
+| solo `e990fbdf` | 59 | 98,67 | 54,06 | no (análisis) |
 
 ---
 
