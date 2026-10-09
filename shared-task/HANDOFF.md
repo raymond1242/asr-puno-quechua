@@ -16,9 +16,10 @@ Reserve the last three days for the paper.
 | Data | Scripted 27.0 + Spontaneous 5.0 downloaded, manifests built and verified. |
 | Test set | Received: 659 clips. **Not downloadable — copy it across by hand.** |
 | Baseline | Reproduced on the GPU box: 13.15 / 2.58, identical to the Mac. |
-| Trained | **`checkpoints/hf/final_n500_lr2e-5`**: 500 steps, LR 2e-5 (findings C, G, H). |
-| LM | Character n-gram + beam search. On the final recipe it helps spontaneous only (finding J). |
-| Candidate | **`submission/final_n500_lr2e-5_v3/qxp.zip`** — final model, scripted greedy, spontaneous + LM (`submission_v3.json`). Valid, not yet submitted. Dev (speaker-only, optimistic for scripted): 9.23 / 3.01 scripted, 9.06 / 1.30 spontaneous. |
+| Trained | **`checkpoints/hf/final_n500_lr2e-5`**: 500 steps, LR 2e-5 (findings C, G, H). Seeds 43, 44 also trained; no ensemble (finding L). |
+| LM | Character n-gram + beam search, spontaneous only (finding J). Its dev gain does not replicate on heldout (finding N). |
+| Candidate | **`submission/final_n500_lr2e-5_v3_2026-10-09/qxp.zip`** — single model, scripted greedy, spontaneous + LM (`submission_v3.json`). Verified (659 rows, template order, none empty); byte-identical to the 2026-10-08 one. Not yet submitted. |
+| Heldout | **Measured once, 2026-10-09 (finding N). Spent: do not use it again for any decision.** |
 
 Update 2026-10-07 (GPU box). Read **Findings from the GPU box** first: two of
 them overturn assumptions below (the test's read sentences are new; the
@@ -304,6 +305,45 @@ Hypothesis: in 500 warm-started steps the model never reaches the overfitting
 that masking prevents (finding C appeared after ~500 steps of a run peaking at
 2.5x this LR), so masking only costs signal.
 
+### N. The heldout, measured once (2026-10-09)
+
+Pre-registered in `experiments/2026-10-09_eval_heldout.sh` (copy timestamped
+before the run in `results/2026-10-09/`), run once after every decision was
+locked, never used to change anything. Verified beforehand that no heldout
+measurement existed anywhere. Decoding v3; dev of the same model alongside:
+
+| model | set | scr WER/CER | spo WER/CER | mean WER/CER |
+|---|---|---|---|---|
+| **both s42 (primary)** | dev | 4.60 / 0.57 | 9.01 / 1.29 | 6.81 / 0.93 |
+| **both s42 (primary)** | **heldout** | **10.90 / 2.35** | **3.30 / 0.38** | **7.10 / 1.37** |
+| both, 3 seeds | heldout | 10.79±0.14 / 2.33±0.02 | 3.38±0.07 / 0.39±0.01 | 7.08±0.05 / 1.36±0.01 |
+| **final s42 (deliverable)** | dev | 9.23 / 3.01 | 9.06 / 1.30 | 9.14 / 2.16 |
+| **final s42 (deliverable)** | **heldout** | **9.71 / 1.76** | **3.62 / 0.43** | **6.66 / 1.09** |
+| final, 3 seeds | heldout | 9.70±0.08 / 1.77±0.01 | 3.56±0.10 / 0.41±0.02 | 6.63±0.09 / 1.09±0.01 |
+
+The means hide two ~6-point moves in opposite directions; never read them
+alone. Composition explains most of it (metadata only, no second look):
+
+- **One speaker.** `e990fbdf` is in the `both` heldout, not its dev. Measured on
+  the `sharedtask` dev: with that speaker's 59 of 1,493 clips the deliverable
+  scores 9.23 / 3.01 scripted; without them **5.71 / 0.93**; on them alone
+  98.67 / 54.06. So the `both` scripted jump 4.60 -> 10.90 is very probably that
+  speaker — inferred, not measured (that needs heldout predictions saved).
+- **The spontaneous heldout is not speaker-disjoint.** 46% of its clips come
+  from 2 speakers with 82 clips in train (74 silver, 8 pending): silver was
+  assigned without regard to speaker. Dev: 1%. That, and young speakers only,
+  is why it scores 3.3.
+
+What the heldout does establish:
+1. The recipe is stable: seed range 0.10 (`both`) / 0.17 (`sharedtask`) mean WER.
+2. Seed differences on dev were noise: the dev ranking of seeds is not kept.
+3. **The LM's spontaneous gain does not replicate.** Dev: +0.12 to +0.65 WER
+   across the six seeds. Heldout: -0.03 on average, CER equal. Selection bias,
+   and an easier set leaving less to fix. Nothing changed (pre-registered); the
+   paper should call the LM neutral, not an improvement.
+4. With sets of 3-7 speakers, who speaks outweighs any dev-fitting; "how much
+   we fitted the dev" cannot be read off the dev-heldout gap.
+
 ### F. Setup traps on the GPU box
 
 - RTX 50xx (sm_120) needs torch **cu128**; the cu124 the requirements used to
@@ -434,26 +474,23 @@ Two traps it handles, both of which produce silent garbage if missed:
 
 ## Next steps, in order
 
-Done 2026-10-08: steps and LR (finding H), memorisation (I), the LM on the
-final recipe (J). Current submission: `submission/final_n500_lr2e-5_v3/qxp.zip`.
+Done 2026-10-09: seeds, ensemble (negative, L), mask_time_prob (negative, M),
+decisions locked, heldout measured once (N), submission regenerated and
+verified. Session write-up: `shared-task/EXPLICACION_SESION_2026-10-09.md`.
+The system is frozen.
 
-1. **Submit it.** It is valid now (659 rows, none empty, `qxp.tsv` inside).
-   Keep each later candidate in its own `submission/<name>/qxp.*`.
-2. **Model averaging** (IMPROVEMENTS item 7): seed noise is ~0.3 mean WER, so
-   averaging the logits of 3-5 seeds of the final recipe should be a real gain.
-   Each seed is ~7 min. Measure on `sharedtask_both` first.
-3. **Train on dev too?** The final model could add `dev_scripted`,
-   `heldout_scripted` and `dev_spontaneous` (260 gold clips — gold spontaneous
-   is scarce). Never `heldout_spontaneous`: those are the organisers' `test`
-   clips (decision 3 in `01_build_manifests.py`). Nothing left to select on
-   afterwards, so do it last.
-4. **Silver or not.** Same short run with `01_build_manifests.py --no_silver`.
-   The spontaneous dev cannot show the effect on elders (finding B).
-5. **Elders** (IMPROVEMENTS item 4): upsampling 60+ means upsampling silver.
-   Decide whether that is worth it without a way to measure it.
-6. **Accents on/off** (item 2).
-7. **The paper.** Reserve the last three days. Findings A, C, D, I and the
-   plateau of H are results in their own right.
+1. **Submit** `submission/final_n500_lr2e-5_v3_2026-10-09/qxp.zip`.
+2. **The paper.** Reserve the last three days. Results in their own right:
+   A (test sentences are new), C and H (overfitting; the plateau), D (corrupted
+   in-training metric), I (memorisation priced at ~1.1 WER), L (why logit
+   ensembling fails for CTC), N (heldout; per-speaker composition; the LM's
+   dev gain not replicating). Report all four numbers everywhere.
+3. **Optional, analysis only:** per-speaker heldout numbers would confirm the
+   `e990fbdf` explanation of N. It means running the heldout again with
+   `--save_predictions`. It changes no decision, but it is a second look —
+   decide explicitly before doing it.
+4. **Do not reopen** training choices with the heldout. Any new idea needs a
+   new held-out set; the current one is spent.
 
 Re-tuning the LM on a new model: `07_tune_lm.py` caches emissions (~45 s GPU),
 the grid is CPU. For scripted use LMs that exclude the dev sentences
