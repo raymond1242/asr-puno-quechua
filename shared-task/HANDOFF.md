@@ -47,6 +47,49 @@ python shared-task/04_evaluate.py --model checkpoints/hf/ft_cpt_silver
 
 ---
 
+## Decision: which model we submit, and what we report (2026-10-08)
+
+**Submit `final_n500_lr2e-5`** (trained on `sharedtask`, the full speaker
+split). **Report both numbers**, and treat the gap between them as a result.
+
+| Model | Trained on | Measured on | Scripted WER | Status of the number |
+|---|---|---|---:|---|
+| `final_n500_lr2e-5` | `sharedtask` | `sharedtask` dev | 9.23 | optimistic: dev sentences are in train |
+| `both_n500_lr2e-5` | `sharedtask_both` | `sharedtask_both` dev | 4.60 | clean: neither speakers nor sentences shared |
+
+Why submit the first: its split design is the paper's own, so
+13.15 -> 9.38 is a like-for-like improvement over the published baseline, on
+one ruler. Training on `sharedtask_both` would hold back 15% of the sentences
+and ~4.6 h of audio purely to enable measurement; holding sentences out does
+not prepare a model for new sentences, it only lets you score yourself. The
+submitted model has no clean measurement of its own, and the paper must say so.
+
+Why report the second alongside it: it is the only number measured without
+sentence overlap, and the two together are the honest statement.
+
+### What the paper should say about the split
+
+`data/make_split.py`, which produced the paper's `data/splits_cv26/`, groups by
+`client_id` and balances gender and duration. Sentences play no part. Measured:
+
+| | speakers shared with train | sentences shared with train |
+|---|---:|---:|
+| paper's dev | 0 | 805 of 805 (100%) |
+| paper's test | 0 | 757 of 757 (100%) |
+
+The train split holds all 2,067 sentences, so complete overlap is unavoidable
+by construction. Our finding I measures what that is worth: ~1.1 WER points at
+250 steps, and the effect should grow with training length — the paper trains
+for 20,000 updates.
+
+State it as a property of the benchmark, not a fault of the authors: the
+established split for this Quechua variety shares every evaluation sentence
+with training, so published figures overstate performance on unseen speech.
+Finding A shows the shared task's own test does use new sentences, which is
+what makes the distinction matter here.
+
+---
+
 ## Findings from the GPU box (2026-10-07), most useful first
 
 ### A. The test's read sentences are NOT the 2,067 we train on
