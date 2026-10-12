@@ -250,6 +250,14 @@ results/*/test/*
 results/*/test_spont/*
 results/omnilingual/*/*.tsv
 paper/*
+# ...except our own paper sources (the PDF and LaTeX by-products stay ignored,
+# see paper/.gitignore)
+!paper/.gitignore
+!paper/*.tex
+!paper/*.bib
+!paper/*.md
+!paper/*.sh
+!paper/sections/
 data/collao/*
 data/additional_data_16k/*
 data/prepare_collao_cpt.py

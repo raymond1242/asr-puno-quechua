@@ -1,0 +1,139 @@
+\section{Data and Experimental Protocol}
+\label{sec:data}
+
+\subsection{Corpora}
+
+The task uses two Common Voice \cite{ardila2020commonvoice} releases for Puno
+Quechua \cite{huaman2026quechua}. \emph{Scripted Speech 27.0} holds 22{,}727 validated clips, 30.49 hours from 77
+speakers, drawn from only 2{,}067 distinct sentences -- so each sentence is read
+by roughly eleven different people. That ratio is ordinary for read-speech
+collection and it shapes every evaluation decision below.
+
+\emph{Spontaneous Speech 5.0} holds 7{,}305 clips, 35.41 hours from 110
+speakers, recorded as free answers to 150 questions. Only 1{,}222 clips carry a
+human transcription, 5.81 hours; the remaining 6{,}083 have none, because
+transcription requires a Quechua literacy few speakers have. The baseline
+release supplies automatic ``silver'' transcriptions for these, generated with
+omniASR \cite{keren2025omnilingual}, and we reuse 5{,}782 of them, adding about 21 hours of otherwise unusable speech.
+
+One property is easy to mistake and catastrophic if mistaken: the corpus
+carries both a \texttt{prompt} column, the question read to the speaker,
+present in all 7{,}305 rows, and a \texttt{transcription} column, what the
+speaker said, present in 1{,}222. Training on the prompt would teach the model
+that every twenty-second answer transcribes to one of 150 short questions.
+
+\subsection{The curated reference}
+\label{sec:curated}
+
+Written Puno Quechua has no standardised orthography and contributors spelled
+as they saw fit, so scoring against that uneven text would measure how well a
+system reproduces the inconsistencies of volunteers rather than how well it
+hears. The organisers therefore released a curated reference for the 2{,}067
+scripted sentences, and it is what the shared task scores against. The curation
+is substantial: 629 sentences differ in spelling beyond case and punctuation,
+adopting Puno forms --
+\texttt{allqu}$\rightarrow$\texttt{alqu},
+\texttt{iskay}$\rightarrow$\texttt{ishkay},
+\texttt{misk'i}$\rightarrow$\texttt{mishk'i}. Each is a single-letter change,
+and each costs a whole word under WER.
+
+The published baseline predates the curated release and was trained on the raw
+text, which isolates the effect exactly: one fixed set of its hypotheses scores
+8.13 WER and 2.76 CER against the raw reference, and 16.08 and 3.77 against the
+curated one. Nearly eight points of word error rate are orthography rather than
+acoustics, and aligning the training text with the curated reference is the
+single largest improvement available in this task.
+
+\subsection{Text normalisation}
+
+The curated scripted text uses 27 symbols; the spontaneous transcriptions are
+not uniform, with 243 rows carrying 28 characters outside that convention --
+digits, braces, brackets, Spanish accents, three Unicode spellings of the
+apostrophe and one control character. The apostrophe matters most: in Puno
+Quechua it forms part of the letter for ejective consonants (\texttt{k'},
+\texttt{p'}, \texttt{ch'}), so three spellings split one phoneme across three
+output symbols.
+
+We fold everything to the curated convention: lowercase, Unicode NFC,
+\texttt{a}--\texttt{z}, \texttt{ñ} and the apostrophe. Two choices were
+verified against the curated reference rather than assumed -- it contains no
+accented vowels and no hyphens in 2{,}067 sentences -- leaving a 29-symbol
+training alphabet, all of it present in the released checkpoint's 50-way CTC
+head.
+
+\subsection{The test set does not reuse training sentences}
+\label{sec:newsentences}
+
+With only 2{,}067 sentences in the corpus and all of them recorded, it seemed
+near certain that the scripted test would reuse them. Whether it does changes
+what a development set can tell us, so we checked.
+
+The test ships without transcriptions, so the check must avoid labels. We
+transcribed the test audio greedily and measured, for each hypothesis, the
+normalised edit distance to the nearest sentence in the pool: a hypothesis of a
+pool sentence lands close to it even when recognition is imperfect, and one of
+an unseen sentence does not. Calibrating on development audio under both
+conditions gives Table~\ref{tab:newsent}.
+
+\begin{table}[tb]
+\centering\small
+\caption{Normalised edit distance from a hypothesis to the nearest sentence in
+the 2{,}067-sentence pool. The test behaves like the ``sentence removed''
+condition, indicating that it does not reuse the pool.}
+\label{tab:newsent}
+\begin{tabular}{lrr}
+\toprule
+Condition & Median distance & Within 0.05 \\
+\midrule
+Development, its sentence in the pool & 0.000 & 91\% \\
+Development, its sentence removed from the pool & 0.516 & 0\% \\
+Test, scripted & 0.480 & 3.7\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The test behaves like the ``sentence removed'' condition. Its hypotheses also
+run eight to twelve words against a pool mean of four. We conclude that the
+scripted test draws on sentences outside the training corpus -- which decides
+how the rest of this paper is measured, since a development set whose sentences
+the model has heard from eleven other speakers will prefer systems that
+remember text over systems that recognise speech.
+
+\subsection{Splits}
+\label{sec:splits}
+
+The baseline's split, which we reproduce as \texttt{sharedtask}, assigns whole
+speakers to each partition, balancing gender and duration. It separates
+speakers cleanly but cannot separate text: the training portion holds all
+2{,}067 sentences, so every development sentence appears there, read by other
+people. On the baseline's own released split, 805 of 805 development sentences
+and 757 of 757 test sentences also occur in training. This follows from the
+corpus rather than from oversight -- using all 22{,}727 clips requires all
+2{,}067 sentences in training.
+
+We therefore built a second split, \texttt{sharedtask\_both}, disjoint in
+speakers \emph{and} text. Holding out sentences costs clips, so its development
+portion falls to 339 scripted clips against 1{,}493; with 1{,}347 reference
+words, one WER point is thirteen words, and we treat differences below a few
+tenths as noise throughout.
+
+We use both: decisions are made on \texttt{sharedtask\_both}, which matches the
+condition the test is in, while the comparison against the published baseline
+is reported on \texttt{sharedtask}, the ruler the baseline was measured with.
+The spontaneous side needs no reconstruction -- its release carries an official
+\texttt{split} column, which we adopt unchanged, excluding the 296 clips marked
+as test from training and development alike.
+
+\subsection{The held-out set}
+\label{sec:heldout}
+
+A development set that has driven every decision -- ours drove step counts,
+learning rates, 72 language model configurations and the decoder per domain --
+is no longer an unbiased estimate. None of that is training in the gradient
+sense, but all of it is selection, and selection leaves a mark.
+
+We therefore reserved a held-out portion when the splits were built, never
+looked at it, and measured it once, after every decision here was frozen. To
+make the commitment checkable rather than merely stated, the expected figures
+were pre-registered in the evaluation script's header before it ran. Nothing
+was changed afterwards.

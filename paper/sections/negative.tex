@@ -1,0 +1,51 @@
+\section{What Did Not Work}
+\label{sec:negative}
+
+\subsection{Averaging CTC models across seeds}
+
+
+Seed noise of 0.3 mean WER is exactly what ensembling should remove, so we
+expected a gain. Neither fusion rule delivers one, and the failure has a
+measurable mechanism. CTC emits sharp peaks at particular frames and blanks
+elsewhere, and independently trained models place those peaks at adjacent but
+not identical frames. Averaging logits is a geometric mean over probabilities,
+so a confident peak averaged against a near-zero value collapses and the letter
+disappears: character deletions rise from 21 to 50, and mean WER rises from
+7.02 for a single seed to 8.38. Averaging probabilities stops deleting letters
+but then gains nothing, at 7.30, within noise of a single model.
+
+With CTC's peaky, time-shifted alignments, the fusion rule matters more than
+the ensemble.
+
+\subsection{Stronger SpecAugment masking}
+
+Overfitting past 1{,}000 updates is the failure mode we observed, and
+SpecAugment \cite{park2019specaugment} addresses it directly. Raising the
+time-masking probability from the default 0.05 to 0.2 and 0.5 gives 6.81, 7.05
+and 7.68 mean WER: monotonically worse, on all four numbers. With a 500-update
+schedule there is little time to overfit, and masking removes evidence the
+model has few chances to see.
+
+\subsection{The language model gain does not survive}
+\label{sec:lmneg}
+
+On scripted speech, no setting in the grid gains measurably once the acoustic
+model is this accurate: every configuration sits within $\pm0.15$ WER of greedy
+decoding, about two words. We therefore decode scripted speech without a
+language model, which is why the final system uses one in only one domain.
+
+On spontaneous speech the model does gain on development data, by 0.31, 0.17
+and 0.12 WER across three seeds, but on held-out data the identical
+configuration gains 0.00 and loses 0.04 and 0.08. The gain does not transfer,
+even though it was tuned on the text-disjoint split. We keep the configuration,
+since the held-out effect is within noise either way, but no longer claim it
+helps.
+
+An earlier version of this tuning shows the hazard more sharply. Run on the
+speaker-disjoint development set, the grid selects $\alpha = 2.0$ and reports
+4.54 scripted WER -- at that weight the language model recalls whole
+development sentences it was built from. Under the new-sentence condition the
+same setting yields 9.83, worse than greedy. A language model tuned where the
+text is shared will prefer memorisation, expensively.
+
+% =====================================================================

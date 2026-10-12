@@ -1,0 +1,29 @@
+\section{Limitations}
+\label{sec:limitations}
+
+\textbf{The submitted system has no clean measurement of its own.} It is
+trained on the established split, whose training portion contains the
+development sentences. We submit it for comparability with the published
+baseline and because it sees 15\% more distinct sentences than the
+text-disjoint alternative; that more text should help on new sentences is a
+reasoned bet, not a measured one, and the 1.1-point effect of
+Section~\ref{sec:overlap} measures memorisation and must not be used to justify
+it. The clean figures belong to the sibling model trained on the text-disjoint
+split.
+
+\textbf{The search was narrow:} we varied updates and learning rate only.
+Batch size, spontaneous upsampling, layer dropout, accent folding and the
+inclusion of silver data were left at their defaults.
+
+\textbf{Three seeds} are enough to establish that several apparent wins were
+noise, too few to separate recipes differing by less than their spread.
+
+\textbf{Half the ranking cannot be measured faithfully.} The spontaneous test
+consists entirely of speakers aged sixty or over. In the whole corpus, such
+speakers contribute one gold transcription and 2.90 of 35.41 hours, all silver.
+No development or held-out set we can construct contains gold elderly
+spontaneous speech, so the domain deciding half our rank is the one we can
+least evaluate. Gold transcriptions from elderly speakers are, in our view, the
+single most valuable addition this resource could receive.
+
+% =====================================================================

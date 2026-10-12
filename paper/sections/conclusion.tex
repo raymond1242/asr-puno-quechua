@@ -1,0 +1,13 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+We fine-tuned the published XLS-R-300M checkpoint for 500 updates on the
+organisers' curated reference text and decoded spontaneous speech with a
+character $n$-gram model, improving the published baseline from 13.15 to 9.14
+mean WER on the same split with the same reference. Most of that gain is
+orthography rather than acoustics.
+
+The methodological result may outlast the system: the established split shares
+every evaluation sentence with training, worth 1.1 WER points, while the shared
+task's own test does not. Three things we expected to help did not. Gold transcriptions from elderly
+speakers would make half of this benchmark measurable for the first time.

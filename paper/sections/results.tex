@@ -1,0 +1,91 @@
+\section{Results}
+\label{sec:results}
+
+\begin{table}[tb]
+\centering\small
+\caption{Main results, all figures percentages, scored against the curated
+reference. The first block compares with the published baseline on the
+established split; the second gives the text-disjoint split, where the
+held-out row was measured once after every decision was frozen.}
+\label{tab:main}
+\begin{tabular}{lrrrrrr}
+\toprule
+& \multicolumn{2}{c}{Scripted} & \multicolumn{2}{c}{Spontaneous} & \multicolumn{2}{c}{Mean} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
+System & WER & CER & WER & CER & WER & CER \\
+\midrule
+\multicolumn{7}{l}{\emph{\texttt{sharedtask} development (speaker-disjoint)}} \\
+Published baseline, converted & 16.08 & 3.77 & 10.23 & 1.39 & 13.15 & 2.58 \\
+This work & 9.23 & 3.01 & 9.06 & 1.30 & \textbf{9.14} & 2.16 \\
+\addlinespace
+\multicolumn{7}{l}{\emph{\texttt{sharedtask\_both} (speaker- and text-disjoint), mean of three seeds}} \\
+\quad development & 4.85 & 0.62 & 9.20 & 1.31 & 7.02 & 0.96 \\
+\quad held-out & 10.79 & 2.33 & 3.38 & 0.39 & 7.08 & 1.36 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{How long to train}
+\label{sec:plateau}
+
+Fine-tuning from an already-adapted checkpoint needs far less training than the
+original 8{,}000 updates. On the text-disjoint split, every configuration
+between 250 and 1{,}000 updates and between $1\times10^{-5}$ and
+$5\times10^{-5}$ lands at 7.1--7.3 mean WER: below about 200 updates the
+curated orthography is not yet learned, beyond about 1{,}000 the model
+memorises, and by 8{,}000 it is worse than at 500. The useful conclusion is a
+broad plateau, not an optimum.
+
+Reaching that conclusion required a correction worth reporting. A single run at
+500 updates and $2\times10^{-5}$ gave 6.96 mean WER, best of every
+configuration on all four numbers, and we recorded it as the winner; a second
+seed of the identical recipe gave 7.26. Three seeds measure the noise directly:
+7.02 mean WER with standard deviation 0.19 on the text-disjoint development
+set, and 9.23 with deviation 0.08 on the larger speaker-disjoint one, of which
+Table~\ref{tab:main} reports the submitted seed. We treat any difference below
+roughly 0.3 mean WER as indistinguishable from the random draw. The contrast between the two sets is easy to overlook when choosing one:
+the smaller does not merely measure less precisely, it manufactures differences.
+
+\subsection{Sentence overlap, measured}
+\label{sec:overlap}
+
+Section~\ref{sec:newsentences} makes the established split's text overlap a
+measurement problem rather than a curiosity. The design holds the evaluation fixed and varies only what the model saw.
+Condition~A trains on the text-disjoint split, so the development sentences
+never appear. Condition~B adds the recordings of those same sentences made by
+\emph{training} speakers, 3.65 hours more audio. Comparing A with B alone would
+confound exposure with data volume, so condition~B$_{\text{eq}}$ removes 3.64
+hours of randomly chosen A clips, leaving exactly A's 39.94 hours. Every
+condition uses the same recipe, 250 updates, and the same development set.
+
+
+Over two seeds each, A gives 5.20 and 4.97 scripted WER (0.65 and 0.62 CER)
+and B$_{\text{eq}}$ gives 3.79 and 4.23 (0.48 and 0.55); B, with one seed and
+more data, gives 4.68. The seed ranges of A and B$_{\text{eq}}$ do not overlap
+-- the worse B$_{\text{eq}}$ run still beats the better A run -- so at equal
+training volume, having heard a sentence read by other speakers is worth 1.1
+WER points, a 21\% relative reduction, and about 19\% of CER.
+
+That figure is a lower bound: it is measured at 250 updates, and memorisation
+grows with training, so the original baseline's 8{,}000 updates should widen
+it.
+
+\subsection{Held-out evaluation}
+\label{sec:heldout-results}
+
+
+The lower block of Table~\ref{tab:main} gives the measurement. The means agree
+closely, 7.02 against 7.08, which is the result we care about:
+after dozens of decisions taken on the development set, the held-out estimate
+did not collapse, and seed spread falls to 0.05.
+
+The agreement hides two large opposing movements, both composition rather than
+generalisation. Scripted error doubles because the held-out portion contains
+one speaker who alone scores 98.67 WER over 59 clips; removing that same
+speaker from the development set moves its scripted WER from 9.23 to 5.71.
+Spontaneous error falls by two thirds because 46\% of the held-out spontaneous
+portion comes from speakers already heard through silver transcriptions in
+training. With 77 scripted speakers, a split places few voices in each
+partition, so no such figure should be read without its per-speaker breakdown.
+
+% =====================================================================

@@ -1,0 +1,55 @@
+\section{System}
+\label{sec:system}
+
+\subsection{Acoustic model}
+
+We start from the baseline's strongest balanced checkpoint: XLS-R-300M
+\cite{babu2022xlsr}, a multilingual wav2vec~2.0 model
+\cite{baevski2020wav2vec2} of 315M parameters, continued pre-training on 65 hours of
+unlabelled Puno Quechua audio, then CTC fine-tuning \cite{graves2006ctc} on
+validated and silver data. Continued pre-training is what adapts a multilingual
+model to the phonology of a language it has barely seen, and is reliably worth
+its cost in low-resource settings \cite{dehaven2022cpt,getman2024adaptation};
+we reuse the authors' checkpoint rather than repeat it.
+
+The released checkpoints are fairseq files, and fairseq 0.12.2 has no wheel for
+current Python versions, so we port the weights to the HuggingFace
+\texttt{Wav2Vec2ForCTC} implementation \cite{wolf2020transformers}, mapping all
+424 tensors with none missing or unexpected.\footnote{Two details silently
+corrupt the result if missed: fairseq nests the convolutional layer norm one
+level deeper, and the published dictionary gained a word-delimiter symbol after
+some checkpoints were trained, so vocabulary size must be checked per
+checkpoint. Our converter refuses to write a model unless every tensor maps.}
+As a correctness check, the converted model scores 27.26 WER on the baseline's
+out-of-domain set against its published 27.4, confirming the port is faithful.
+
+Fine-tuning runs for 500 updates at learning rate $2\times10^{-5}$
+(Section~\ref{sec:plateau}). Batches are formed by total audio duration rather
+than clip count: clips range from under two seconds to thirty, so any fixed
+count either exhausts memory on long clips or wastes the device on short ones.
+
+\subsection{Decoding}
+
+Greedy CTC decoding commits to the most probable symbol at each 20\,ms frame
+independently, with no notion of the word being formed, while the baseline's
+out-of-domain errors are overwhelmingly substitutions -- the signature of words
+that are nearly right. That invites a language model, and it must be over
+characters: Quechua builds words by chaining suffixes, and 77\% of the distinct
+word forms in the scripted sentence corpus occur exactly once, so a word-level
+model would never have seen the correct form of most words it must judge.
+
+We build character $n$-grams with modified Kneser-Ney smoothing
+\cite{chen1996smoothing} and verify each against KenLM \cite{heafield2011kenlm}
+by summing the probability of every character over 200 contexts; the largest
+deviation from one was of order $10^{-6}$. Decoding uses flashlight-text's
+lexicon-free beam search \cite{kahn2022flashlight}, which scores the language
+model on every emitted character rather than only at word boundaries, with beam
+width 64. A hypothesis scores $\sum \log p_{\text{CTC}} + \alpha \sum \log
+P_{\text{LM}} + \beta\,n_{\text{words}}$, where $\alpha$ weights the language
+model against the acoustics and $\beta$ offsets its preference for shorter word
+sequences.
+
+The final configuration decodes scripted speech greedily and spontaneous speech
+with an order-8 model trained on gold and silver spontaneous text,
+$\alpha = 0.5$, $\beta = 0$. Section~\ref{sec:lmneg} explains why scripted
+speech ends up with no language model at all.
