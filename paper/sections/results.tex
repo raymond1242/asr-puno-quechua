@@ -59,16 +59,30 @@ hours of randomly chosen A clips, leaving exactly A's 39.94 hours. Every
 condition uses the same recipe, 250 updates, and the same development set.
 
 
-Over two seeds each, A gives 5.20 and 4.97 scripted WER (0.65 and 0.62 CER)
-and B$_{\text{eq}}$ gives 3.79 and 4.23 (0.48 and 0.55); B, with one seed and
-more data, gives 4.68. The seed ranges of A and B$_{\text{eq}}$ do not overlap
--- the worse B$_{\text{eq}}$ run still beats the better A run -- so at equal
-training volume, having heard a sentence read by other speakers is worth 1.1
-WER points, a 21\% relative reduction, and about 19\% of CER.
+\begin{table}[tb]
+\centering\small
+\caption{What hearing a development sentence from other speakers is worth.
+Same development set and same recipe (250 updates) throughout; only the
+training data differs. Two seeds where two figures are given.}
+\label{tab:overlap}
+\begin{tabular}{llrr}
+\toprule
+Training set & Dev sentences heard? & Scripted WER & Scripted CER \\
+\midrule
+A \quad (39.94 h) & no & 5.20 / 4.97 & 0.65 / 0.62 \\
+B$_{\text{eq}}$ (39.94 h) & yes, same hours as A & \textbf{3.79 / 4.23} & \textbf{0.48 / 0.55} \\
+B \quad (43.58 h) & yes, with 3.65 h more audio & 4.68 & 0.60 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-That figure is a lower bound: it is measured at 250 updates, and memorisation
-grows with training, so the original baseline's 8{,}000 updates should widen
-it.
+The seed ranges of A and B$_{\text{eq}}$ do not overlap -- the worse
+B$_{\text{eq}}$ run still beats the better A run -- so at equal training
+volume, having heard a sentence read by other speakers is worth 1.1 WER points,
+a 21\% relative reduction, and about 19\% of CER.
+
+It is a lower bound: memorisation grows with training, and the original
+baseline runs for 8{,}000 updates.
 
 \subsection{Held-out evaluation}
 \label{sec:heldout-results}

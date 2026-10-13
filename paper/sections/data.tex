@@ -16,21 +16,14 @@ transcription requires a Quechua literacy few speakers have. The baseline
 release supplies automatic ``silver'' transcriptions for these, generated with
 omniASR \cite{keren2025omnilingual}, and we reuse 5{,}782 of them, adding about 21 hours of otherwise unusable speech.
 
-One property is easy to mistake and catastrophic if mistaken: the corpus
-carries both a \texttt{prompt} column, the question read to the speaker,
-present in all 7{,}305 rows, and a \texttt{transcription} column, what the
-speaker said, present in 1{,}222. Training on the prompt would teach the model
-that every twenty-second answer transcribes to one of 150 short questions.
-
 \subsection{The curated reference}
 \label{sec:curated}
 
-Written Puno Quechua has no standardised orthography and contributors spelled
-as they saw fit, so scoring against that uneven text would measure how well a
-system reproduces the inconsistencies of volunteers rather than how well it
-hears. The organisers therefore released a curated reference for the 2{,}067
-scripted sentences, and it is what the shared task scores against. The curation
-is substantial: 629 sentences differ in spelling beyond case and punctuation,
+Written Puno Quechua has no standardised orthography, and contributors spelled
+as they saw fit. Scoring against that uneven text would reward reproducing
+their inconsistencies rather than hearing well, so the organisers released a
+curated reference for the 2{,}067 scripted sentences, and it is what the shared
+task scores against. The curation is substantial: 629 sentences differ in spelling beyond case and punctuation,
 adopting Puno forms --
 \texttt{allqu}$\rightarrow$\texttt{alqu},
 \texttt{iskay}$\rightarrow$\texttt{ishkay},
@@ -61,43 +54,26 @@ accented vowels and no hyphens in 2{,}067 sentences -- leaving a 29-symbol
 training alphabet, all of it present in the released checkpoint's 50-way CTC
 head.
 
+The folding is orthographic, not lexical: the organisers' curation also
+replaces whole word forms (\texttt{allqu}$\rightarrow$\texttt{alqu}), and we
+do not propagate those to the spontaneous transcriptions, which nobody curated.
+The 372 substitutions recoverable from the scripted diff would touch 1.20\% of
+spontaneous training tokens; we leave this untested.
+
 \subsection{The test set does not reuse training sentences}
 \label{sec:newsentences}
 
 With only 2{,}067 sentences in the corpus and all of them recorded, it seemed
-near certain that the scripted test would reuse them. Whether it does changes
-what a development set can tell us, so we checked.
+near certain that the scripted test would reuse them. It does not. Using only
+our own greedy hypotheses on the test audio -- no labels -- we measured the
+normalised edit distance from each to the nearest sentence in the pool. A
+development hypothesis whose sentence is in the pool has a median distance of
+0.000; with that sentence removed, 0.516. The test scores 0.480, and its
+hypotheses run eight to twelve words against a pool mean of four.
 
-The test ships without transcriptions, so the check must avoid labels. We
-transcribed the test audio greedily and measured, for each hypothesis, the
-normalised edit distance to the nearest sentence in the pool: a hypothesis of a
-pool sentence lands close to it even when recognition is imperfect, and one of
-an unseen sentence does not. Calibrating on development audio under both
-conditions gives Table~\ref{tab:newsent}.
-
-\begin{table}[tb]
-\centering\small
-\caption{Normalised edit distance from a hypothesis to the nearest sentence in
-the 2{,}067-sentence pool. The test behaves like the ``sentence removed''
-condition, indicating that it does not reuse the pool.}
-\label{tab:newsent}
-\begin{tabular}{lrr}
-\toprule
-Condition & Median distance & Within 0.05 \\
-\midrule
-Development, its sentence in the pool & 0.000 & 91\% \\
-Development, its sentence removed from the pool & 0.516 & 0\% \\
-Test, scripted & 0.480 & 3.7\% \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The test behaves like the ``sentence removed'' condition. Its hypotheses also
-run eight to twelve words against a pool mean of four. We conclude that the
-scripted test draws on sentences outside the training corpus -- which decides
-how the rest of this paper is measured, since a development set whose sentences
-the model has heard from eleven other speakers will prefer systems that
-remember text over systems that recognise speech.
+That decides how the rest of this paper is measured: a development set whose
+sentences the model has heard from eleven other speakers will prefer systems
+that remember text over systems that recognise speech.
 
 \subsection{Splits}
 \label{sec:splits}

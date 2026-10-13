@@ -44,10 +44,15 @@ by summing the probability of every character over 200 contexts; the largest
 deviation from one was of order $10^{-6}$. Decoding uses flashlight-text's
 lexicon-free beam search \cite{kahn2022flashlight}, which scores the language
 model on every emitted character rather than only at word boundaries, with beam
-width 64. A hypothesis scores $\sum \log p_{\text{CTC}} + \alpha \sum \log
-P_{\text{LM}} + \beta\,n_{\text{words}}$, where $\alpha$ weights the language
-model against the acoustics and $\beta$ offsets its preference for shorter word
-sequences.
+width 64. A hypothesis scores
+\begin{equation}
+\sum \log p_{\text{CTC}}
+\;+\; \alpha \sum \log P_{\text{LM}}
+\;+\; \beta\,n_{\text{words}},
+\label{eq:score}
+\end{equation}
+where $\alpha$ weights the language model against the acoustics and $\beta$
+offsets its preference for shorter word sequences.
 
 The final configuration decodes scripted speech greedily and spontaneous speech
 with an order-8 model trained on gold and silver spontaneous text,

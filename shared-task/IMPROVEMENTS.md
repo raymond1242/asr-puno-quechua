@@ -91,6 +91,49 @@ Fine-tune on each and compare spontaneous WER. Decide on the number.
 
 ---
 
+## 2b. Propagate the curated spelling to the spontaneous text
+
+**Found by reading the paper draft, 2026-10-13. Measured, never tested.**
+
+**The situation.** Our normaliser folds *characters* in the spontaneous
+transcriptions -- case, accents, apostrophe variants, stray symbols. It does
+not fold *word forms*. The organisers' curation of the scripted sentences does
+both: it also rewrites `allqu`->`alqu`, `iskay`->`ishkay`, `aswan`->`ashwan`,
+`huk`->`huq`, `askha`->`ashkha`.
+
+Nobody curated the spontaneous transcriptions, so they still carry the old
+forms -- and are inconsistent with themselves:
+
+| Form | In curated scripted | In spontaneous training text |
+|---|---:|---:|
+| `allqu` / `alqu` | 0 / 211 | **22** / 1 |
+| `iskay` / `ishkay` | 0 / 142 | **55** / 89 |
+| `aswan` / `ashwan` | 0 / 153 | **63** / 65 |
+| `misk'i` / `mishk'i` | 0 / 19 | **12** / 1 |
+
+**The size of it.** Aligning the word-pair diff between the raw and curated
+scripted sentences yields **372 substitutions**. Applying them to the
+spontaneous training text would touch **919 tokens, 1.20%** of it, across 96
+distinct forms.
+
+**What to do.** Extract the mapping from
+`validated_sentences.tsv` against `validated_sentences_curated.tsv` by aligning
+same-length sentence pairs word by word, apply it inside `normalize()` behind a
+flag, rebuild, and fine-tune the same 500-update recipe.
+
+**What to watch.** This cuts both ways and is genuinely uncertain. The
+spontaneous *test* reference was not curated either, so it probably spells the
+old way too -- in which case aligning our training text to the curated
+convention would make spontaneous WER **worse**, not better. The honest
+experiment measures both domains: scripted should improve or hold, spontaneous
+may regress. Only adopt it if the mean improves.
+
+**Watch out too** for over-application: the mapping is derived from scripted
+sentences and some substitutions may be context-dependent, so check a sample of
+rewritten spontaneous lines by eye before training on them.
+
+---
+
 ## 3. Beam search with a subword language model
 
 **Status (2026-10-07): done.** `ctc_lm.py`, `06_build_lm.py`, `07_tune_lm.py`;
