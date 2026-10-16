@@ -230,7 +230,7 @@ cards(s, [
   { big: "465.000", label: "hablantes de quechua de Puno" },
   { big: "66 h", label: "de habla recolectada con diseño participativo\npor Huaman et al. (2026)" },
   { big: "4", label: "números componen el ranking: WER y CER en\nscripted y spontaneous" },
-  { big: "659", label: "clips en el test oficial\n438 leídos · 221 espontáneos" },
+  { big: "659", label: "clips en el test oficial\n438 scripted · 221 spontaneous" },
 ], 2.5, 1.55);
 s.addText("Promediar cuatro números descarta al mejor modelo del paper en scripted:",
   { x: M, y: 4.45, w: W, h: 0.3, isTextBox: true, margin: 0, fontSize: 14, color: INK, fontFace: THEME.bodyFontFace });
@@ -239,7 +239,7 @@ tbl(s, [
   [{ text: [code("xls-r + CPT"), txt(", solo validado")] }, { text: "1,19", options: { align: "right" } }, { text: "13,6", options: { align: "right", color: RUST } }, { text: "No: hunde dos de los cuatro", options: { color: MUTED } }],
   [{ text: [code("xls-r + CPT", { bold: true }), txt(", validado + silver", { bold: true })] }, { text: "2,11", options: { align: "right" } }, { text: "3,15", options: { align: "right" } }, { text: "Sí: equilibrado", options: { bold: true, color: GREEN } }],
 ], { y: 4.85, colW: [4.6, 2.0, 2.3, 2.73], rowH: 0.4 });
-s.addNotes("El quechua de Puno lo hablan unas 465.000 personas, pero casi nadie lo escribe, porque la escolarización es en español. Por eso el ASR aquí no es una comodidad: una interfaz de texto deja fuera precisamente a la gente a la que queremos servir.\n\nDos cosas sobre la tarea. Partimos del corpus de 66 horas que publicaron los organizadores. Y el ranking promedia CUATRO números: WER y CER, en scripted y en spontaneous. Esto no es un detalle: descarta el modelo con mejor habla leída del paper, que tiene 1,19 de WER pero 13,6 en espontánea.");
+s.addNotes("El quechua de Puno lo hablan unas 465.000 personas, pero casi nadie lo escribe, porque la escolarización es en español. Por eso el ASR aquí no es una comodidad: una interfaz de texto deja fuera precisamente a la gente a la que queremos servir.\n\nDos cosas sobre la tarea. Partimos del corpus de 66 horas que publicaron los organizadores. Y el ranking promedia CUATRO números: WER y CER, en scripted y en spontaneous. Esto no es un detalle: descarta el modelo con mejor scripted del paper, que tiene 1,19 de WER pero 13,6 en spontaneous.");
 
 // ===================================================================== 3 ====
 s = pres.addSlide({ masterName: "CONTENIDO" });
@@ -268,7 +268,7 @@ s.addImage({
   x: 3.09, y: 1.56, w: 7.16, h: 4.85, objectName: "pipeline",
 });
 s.addText(emph("Partimos del checkpoint publicado XLS-R-300M con pre-entrenamiento continuo, afinamos 500 pasos sobre el texto curado y decodificamos spontaneous con un modelo de lenguaje de caracteres.", { fontSize: 13, color: MUTED }), { x: M, y: 6.52, w: W, h: 0.5, isTextBox: true, margin: 0, fontSize: 13, color: MUTED, fontFace: THEME.bodyFontFace, align: "center" });
-s.addNotes("Este es el sistema. De izquierda a derecha: los dos corpus más la referencia curada entran en la normalización, que lo pliega todo a un alfabeto de 29 símbolos.\n\nDe ahí salen DOS splits, y esto es lo importante. El de la izquierda separa por hablante, como hacía el baseline, pero comparte las frases entre train y dev. El de la derecha separa por hablante Y por texto.\n\nEl modelo que entregamos se entrena con el primero. Su hermano, con el segundo, y es el único del que tenemos una medición limpia. La flecha punteada marca lo que pasa de uno a otro: la receta, no los pesos.\n\nAbajo a la izquierda, la decodificación: habla leída con argmax voraz, espontánea con beam search y un modelo de lenguaje de caracteres de orden 8.");
+s.addNotes("Este es el sistema. De izquierda a derecha: los dos corpus más la referencia curada entran en la normalización, que lo pliega todo a un alfabeto de 29 símbolos.\n\nDe ahí salen DOS splits, y esto es lo importante. El de la izquierda separa por hablante, como hacía el baseline, pero comparte las frases entre train y dev. El de la derecha separa por hablante Y por texto.\n\nEl modelo que entregamos se entrena con el primero. Su hermano, con el segundo, y es el único del que tenemos una medición limpia. La flecha punteada marca lo que pasa de uno a otro: la receta, no los pesos.\n\nAbajo a la izquierda, la decodificación: scripted con argmax voraz, spontaneous con beam search y un modelo de lenguaje de caracteres de orden 8.");
 
 // ===================================================================== 5 ====
 s = pres.addSlide({ masterName: "CONTENIDO" });
@@ -292,7 +292,7 @@ takeaways(s, [
   { head: "Casi todo es ortografía", body: "La mejora de 6,85 puntos en scripted es del mismo orden que el desajuste de 7,95 que medimos antes." },
   { head: "Equilibrio entre dominios", body: "Mejora en los cuatro números a la vez, que es lo que exige el ranking por media." },
 ], 4.55);
-s.addNotes("Este es el resultado. Mejoramos el baseline de 13,15 a 9,14 de WER medio, sobre el mismo split y con la misma referencia. Es una comparación de igual a igual: mismo modelo base, misma regla de medir.\n\nY quiero ser honesto sobre de dónde viene la mejora. En habla leída ganamos 6,85 puntos, que es del mismo orden que los 7,95 del desajuste ortográfico de la lámina anterior. Es decir: la mayor parte de lo que ganamos es ortografía, no acústica. Mejoramos en los cuatro números, que es lo que exige el ranking.");
+s.addNotes("Este es el resultado. Mejoramos el baseline de 13,15 a 9,14 de WER medio, sobre el mismo split y con la misma referencia. Es una comparación de igual a igual: mismo modelo base, misma regla de medir.\n\nY quiero ser honesto sobre de dónde viene la mejora. En scripted ganamos 6,85 puntos, que es del mismo orden que los 7,95 del desajuste ortográfico de la lámina anterior. Es decir: la mayor parte de lo que ganamos es ortografía, no acústica. Mejoramos en los cuatro números, que es lo que exige el ranking.");
 
 // ===================================================================== 6 ====
 s = pres.addSlide({ masterName: "CONTENIDO" });
@@ -391,7 +391,7 @@ tbl(s, [
 ], { x: M, y: 2.95, w: 5.6, colW: [3.5, 2.1], rowH: 0.38 });
 s.addText("El modelo de lenguaje deja de ayudar",
   { x: 7.1, y: 1.45, w: 5.4, h: 0.3, isTextBox: true, margin: 0, fontSize: 16, bold: true, color: RUST, fontFace: THEME.bodyFontFace });
-s.addText(emph("En habla leída ninguna configuración gana de forma medible: todas quedan a ±0,15 de la decodificación voraz, unas dos palabras. Por eso el sistema final decodifica scripted sin modelo de lenguaje.", { fontSize: 13, color: MUTED }), { x: 7.1, y: 1.82, w: 5.4, h: 1.0, isTextBox: true, margin: 0, fontSize: 13, color: MUTED, fontFace: THEME.bodyFontFace, lineSpacingMultiple: 1.2 });
+s.addText(emph("En scripted ninguna configuración gana de forma medible: todas quedan a ±0,15 de la decodificación voraz, unas dos palabras. Por eso el sistema final decodifica scripted sin modelo de lenguaje.", { fontSize: 13, color: MUTED }), { x: 7.1, y: 1.82, w: 5.4, h: 1.0, isTextBox: true, margin: 0, fontSize: 13, color: MUTED, fontFace: THEME.bodyFontFace, lineSpacingMultiple: 1.2 });
 tbl(s, [
   [{ text: "Semilla", options: { bold: true } }, { text: "Dev", options: { bold: true, align: "right" } }, { text: "Heldout", options: { bold: true, align: "right" } }],
   ["42", { text: "+0,31", options: { align: "right" } }, { text: "0,00", options: { align: "right" } }],
@@ -401,7 +401,7 @@ tbl(s, [
 s.addText(emph("Ganancia en WER de spontaneous frente a decodificación voraz. En el dev gana entre 0,12 y 0,31; en el conjunto reservado, nada.", { fontSize: 12, color: MUTED }), { x: 7.1, y: 4.85, w: 5.4, h: 0.6, isTextBox: true, margin: 0, fontSize: 12, color: MUTED, fontFace: THEME.bodyFontFace, lineSpacingMultiple: 1.2 });
 s.addText("Una ganancia ajustada sobre el dev no sobrevivió a un conjunto limpio, aun habiéndose ajustado sobre el split disjunto en texto.",
   { x: M, y: 5.75, w: W, h: 0.5, isTextBox: true, margin: 0, fontSize: 14, bold: true, color: RUST, fontFace: THEME.bodyFontFace });
-s.addNotes("Las otras dos cosas que no funcionaron.\n\nA la izquierda, la regularización. El sobreajuste pasados los mil pasos era el fallo que observamos, y SpecAugment lo ataca directamente. Subir el enmascarado empeora de forma monótona: 6,81, 7,05, 7,68. Y empeora en los cuatro números. Con una receta de 500 pasos hay poco tiempo para sobreajustar, y la máscara quita evidencia que el modelo tiene pocas ocasiones de ver.\n\nA la derecha, el modelo de lenguaje. En habla leída ninguna configuración gana de forma medible, así que el sistema final decodifica scripted sin él. En espontánea sí gana en el dev, entre 0,12 y 0,31 según la semilla. Pero en el conjunto reservado gana cero y pierde 0,04 y 0,08.\n\nEs decir: una ganancia ajustada sobre el dev no sobrevivió a un conjunto limpio, y eso que la habíamos ajustado sobre el split disjunto en texto. Lo mantenemos porque el efecto está dentro del ruido en ambas direcciones, pero ya no afirmamos que ayude.");
+s.addNotes("Las otras dos cosas que no funcionaron.\n\nA la izquierda, la regularización. El sobreajuste pasados los mil pasos era el fallo que observamos, y SpecAugment lo ataca directamente. Subir el enmascarado empeora de forma monótona: 6,81, 7,05, 7,68. Y empeora en los cuatro números. Con una receta de 500 pasos hay poco tiempo para sobreajustar, y la máscara quita evidencia que el modelo tiene pocas ocasiones de ver.\n\nA la derecha, el modelo de lenguaje. En scripted ninguna configuración gana de forma medible, así que el sistema final decodifica scripted sin él. En spontaneous sí gana en el dev, entre 0,12 y 0,31 según la semilla. Pero en el conjunto reservado gana cero y pierde 0,04 y 0,08.\n\nEs decir: una ganancia ajustada sobre el dev no sobrevivió a un conjunto limpio, y eso que la habíamos ajustado sobre el split disjunto en texto. Lo mantenemos porque el efecto está dentro del ruido en ambas direcciones, pero ya no afirmamos que ayude.");
 
 // ==================================================================== 11 ====
 s = pres.addSlide({ masterName: "CONTENIDO" });
@@ -418,10 +418,10 @@ tbl(s, [
 ], { y: 2.75, w: 11.0, colW: [2.6, 1.68, 1.68, 1.68, 1.68, 1.68], rowH: 0.42 });
 takeaways(s, [
   { head: "Las medias coinciden", body: "7,02 frente a 7,08. Después de decenas de decisiones tomadas sobre el dev, la estimación limpia no se desploma." },
-  { head: "Pero esconden dos movimientos opuestos", body: "La habla leída dobla su error y la espontánea lo divide por tres. Es composición, no generalización." },
+  { head: "Pero esconden dos movimientos opuestos", body: "Scripted dobla su error y spontaneous lo divide por tres. Es composición, no generalización." },
   { head: "Un hablante lo explica casi todo", body: "El reservado incluye a uno que él solo da 98,67 de WER sobre 59 clips." },
 ], 4.85);
-s.addNotes("Esta lámina es la que más me importa metodológicamente.\n\nUn dev que ha guiado todas las decisiones deja de ser una estimación imparcial de nada. El nuestro guió el número de pasos, las tasas, 72 configuraciones de modelo de lenguaje y qué decodificador usar en cada dominio. Nada de eso es entrenamiento en sentido estricto, pero todo es selección.\n\nPor eso apartamos un conjunto el primer día, no lo miramos nunca, y lo medimos UNA sola vez, después de congelar todas las decisiones. Para que el compromiso fuera comprobable y no solo declarado, pre-registramos las cifras esperadas en la cabecera del script antes de ejecutarlo.\n\nLas medias coinciden: 7,02 contra 7,08. Después de decenas de decisiones tomadas sobre el dev, la estimación limpia no se desploma. Pero esa coincidencia esconde dos movimientos grandes y opuestos: la habla leída dobla su error y la espontánea lo divide por tres. Y ambos son composición, no generalización: el reservado contiene un hablante que él solo da 98,67 de WER sobre 59 clips.");
+s.addNotes("Esta lámina es la que más me importa metodológicamente.\n\nUn dev que ha guiado todas las decisiones deja de ser una estimación imparcial de nada. El nuestro guió el número de pasos, las tasas, 72 configuraciones de modelo de lenguaje y qué decodificador usar en cada dominio. Nada de eso es entrenamiento en sentido estricto, pero todo es selección.\n\nPor eso apartamos un conjunto el primer día, no lo miramos nunca, y lo medimos UNA sola vez, después de congelar todas las decisiones. Para que el compromiso fuera comprobable y no solo declarado, pre-registramos las cifras esperadas en la cabecera del script antes de ejecutarlo.\n\nLas medias coinciden: 7,02 contra 7,08. Después de decenas de decisiones tomadas sobre el dev, la estimación limpia no se desploma. Pero esa coincidencia esconde dos movimientos grandes y opuestos: la scripted dobla su error y spontaneous lo divide por tres. Y ambos son composición, no generalización: el reservado contiene un hablante que él solo da 98,67 de WER sobre 59 clips.");
 
 // ==================================================================== 12 ====
 s = pres.addSlide({ masterName: "CONTENIDO" });
