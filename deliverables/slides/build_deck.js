@@ -132,15 +132,54 @@ function takeaways(slide, items, y) {
   });
 }
 
+// Booktabs table, drawn by hand.
+//
+// A PowerPoint table carries a default style that Keynote — and some PowerPoint
+// themes — paint over the cell borders, so a grid comes back however the
+// borders are set. Composing the table from text boxes and three rules renders
+// identically everywhere: a thick rule above the header, a hairline under it,
+// and a thick rule at the foot. No vertical lines, no inner grid.
+let tblN = 0;
 function tbl(slide, rows, opts = {}) {
-  slide.addTable(rows, {
-    x: opts.x || M, y: opts.y, w: opts.w || W,
-    colW: opts.colW,
-    fontSize: opts.fontSize || 13, fontFace: THEME.bodyFontFace, color: INK,
-    border: { type: "solid", color: "E2DAD4", pt: 0.75 },
-    align: "left", valign: "middle", rowH: opts.rowH || 0.32,
-    margin: 0.07,
+  tblN += 1;
+  const x0 = opts.x !== undefined ? opts.x : M;
+  const y0 = opts.y;
+  const colW = opts.colW;
+  const width = colW.reduce((a, b) => a + b, 0);
+  const rowH = opts.rowH || 0.38;
+  const fs = opts.fontSize || 13;
+  const headH = rowH;
+
+  const rule = (y, pt, color) =>
+    slide.addShape(pres.ShapeType.line, {
+      x: x0, y, w: width, h: 0,
+      line: { color, width: pt },
+      objectName: `rule-${tblN}-${y.toFixed(2)}`,
+    });
+
+  rows.forEach((row, r) => {
+    const y = y0 + (r === 0 ? 0 : headH + (r - 1) * rowH);
+    let cx = x0;
+    row.forEach((cell, c) => {
+      const o = typeof cell === "string" ? {} : cell.options || {};
+      const text = typeof cell === "string" ? cell : cell.text;
+      slide.addText(text, {
+        x: cx, y, w: colW[c], h: r === 0 ? headH : rowH,
+        isTextBox: true, margin: [0, 0.08, 0, 0.02],
+        fontSize: fs, fontFace: THEME.bodyFontFace,
+        color: o.color || INK, bold: o.bold || r === 0,
+        align: o.align || "left", valign: "middle",
+        objectName: `cell-${tblN}-${r}-${c}`,
+      });
+      cx += colW[c];
+    });
   });
+
+  const bottom = y0 + headH + (rows.length - 1) * rowH;
+  rule(y0, 1.4, INK);                 // toprule
+  rule(y0 + headH, 0.6, "9A8F88");    // midrule
+  rule(bottom, 1.4, INK);             // bottomrule
+  return bottom;
 }
 
 // ===================================================================== 1 ====
@@ -165,15 +204,21 @@ s.addNotes("Buenos días. Presento el sistema del equipo Innova para la Tarea 1 
 s = pres.addSlide({ masterName: "CONTENIDO" });
 badge(s);
 s.addText("El quechua de Puno y por qué ASR", { placeholder: "title" });
-s.addText("Unas 465.000 personas hablan quechua de Puno, pero la educación formal es casi íntegramente en español: la mayoría habla con fluidez y no sabe leerlo ni escribirlo. Esa asimetría es lo que convierte al reconocimiento de voz en la tecnología adecuada, no en una comodidad: una interfaz de texto excluye justo a quien debería servir.",
-  { placeholder: "body", h: 1.15 });
+s.addText("Hablan con fluidez pero no escriben: la escolarización es en español. Por eso aquí el ASR no es una comodidad — una interfaz de texto excluye justo a quien debería servir.",
+  { placeholder: "body", h: 0.6 });
 cards(s, [
-  { big: "66 h", label: "de habla recolectada por Huaman et al. (2026)\ncon diseño participativo" },
+  { big: "465.000", label: "hablantes de quechua de Puno" },
+  { big: "66 h", label: "de habla recolectada con diseño participativo\npor Huaman et al. (2026)" },
   { big: "4", label: "números componen el ranking: WER y CER\nen habla leída y espontánea" },
-  { big: "659", label: "clips en el test oficial: 438 leídos\ny 221 espontáneos" },
-], 3.0, 1.5);
-s.addText("El ranking promedia cuatro números, así que un sistema que gana en un dominio y pierde en el otro no gana. Eso descarta el mejor modelo del paper en habla leída —1,19 % de WER pero 13,6 % en espontánea— y señala la configuración equilibrada como punto de partida.",
-  { x: M, y: 4.9, w: W, h: 0.9, isTextBox: true, margin: 0, fontSize: 14, color: INK, fontFace: THEME.bodyFontFace, lineSpacingMultiple: 1.2 });
+  { big: "659", label: "clips en el test oficial\n438 leídos · 221 espontáneos" },
+], 2.5, 1.55);
+s.addText("Promediar cuatro números descarta al mejor modelo del paper en habla leída:",
+  { x: M, y: 4.45, w: W, h: 0.3, isTextBox: true, margin: 0, fontSize: 14, color: INK, fontFace: THEME.bodyFontFace });
+tbl(s, [
+  [{ text: "Modelo del paper", options: { bold: true } }, { text: "Leída WER", options: { bold: true, align: "right" } }, { text: "Espont. WER", options: { bold: true, align: "right" } }, { text: "¿Sirve?", options: { bold: true } }],
+  ["xls-r + CPT, solo validado", { text: "1,19", options: { align: "right" } }, { text: "13,6", options: { align: "right", color: RUST } }, { text: "No: hunde dos de los cuatro", options: { color: MUTED } }],
+  [{ text: "xls-r + CPT, validado + silver", options: { bold: true } }, { text: "2,11", options: { align: "right" } }, { text: "3,15", options: { align: "right" } }, { text: "Sí: equilibrado", options: { bold: true, color: GREEN } }],
+], { y: 4.85, colW: [4.4, 1.7, 1.9, 3.63], rowH: 0.4 });
 s.addNotes("El quechua de Puno lo hablan unas 465.000 personas, pero casi nadie lo escribe, porque la escolarización es en español. Por eso el ASR aquí no es una comodidad: una interfaz de texto deja fuera precisamente a la gente a la que queremos servir.\n\nDos cosas sobre la tarea. Partimos del corpus de 66 horas que publicaron los organizadores. Y el ranking promedia CUATRO números: WER y CER, en habla leída y en habla espontánea. Esto no es un detalle: descarta el modelo con mejor habla leída del paper, que tiene 1,19 de WER pero 13,6 en espontánea.");
 
 // ===================================================================== 3 ====
@@ -239,8 +284,8 @@ s.addNotes("Este es el resultado. Mejoramos el baseline de 13,15 a 9,14 de WER m
 s = pres.addSlide({ masterName: "CONTENIDO" });
 badge(s);
 s.addText("Hallazgo 2: el test no reutiliza las frases del corpus", { placeholder: "title" });
-s.addText("El corpus tiene solo 2.067 frases y todas están grabadas, así que parecía seguro que el test las reutilizaría. El test llega sin transcripciones, de modo que la comprobación no puede usar etiquetas: transcribimos el audio del test y medimos la distancia de edición de cada hipótesis a la frase más cercana del corpus.",
-  { placeholder: "body", h: 1.0 });
+s.addText("Solo hay 2.067 frases y todas están grabadas, así que parecía seguro que el test las reutilizaría. Sin etiquetas: medimos la distancia de edición de cada hipótesis a la frase más cercana del corpus, calibrando con el dev.",
+  { placeholder: "body", h: 0.75 });
 tbl(s, [
   [{ text: "Condición", options: { bold: true } }, { text: "Distancia mediana", options: { bold: true, align: "right" } }],
   ["Dev, con su frase presente en el corpus", { text: "0,000", options: { align: "right" } }],
@@ -258,8 +303,8 @@ s.addNotes("Segundo hallazgo. El corpus tiene solo 2.067 frases y todas están g
 s = pres.addSlide({ masterName: "CONTENIDO" });
 badge(s);
 s.addText("Hallazgo 3: cuánto vale haber oído la frase", { placeholder: "title" });
-s.addText("El split establecido comparte todas las frases de evaluación con el entrenamiento, y no por descuido: con 2.067 frases y 77 hablantes, cualquier partición que use todas las grabaciones tiene que meter todas las frases en train. Diseñamos un experimento controlado para ponerle número.",
-  { placeholder: "body", h: 0.9 });
+s.addText("El split establecido comparte todas sus frases de evaluación con el entrenamiento, y no por descuido: con 2.067 frases y 77 hablantes, no hay otra forma de usar las 22.727 grabaciones.",
+  { placeholder: "body", h: 0.65 });
 tbl(s, [
   [{ text: "Entrenamiento", options: { bold: true } }, { text: "¿Oyó las frases de dev?", options: { bold: true } }, { text: "WER leída", options: { bold: true, align: "right" } }],
   ["A  ·  39,94 h", "No", { text: "5,20  /  4,97", options: { align: "right" } }],
@@ -348,8 +393,8 @@ s.addNotes("Las otras dos cosas que no funcionaron.\n\nA la izquierda, la regula
 s = pres.addSlide({ masterName: "CONTENIDO" });
 badge(s);
 s.addText("El conjunto reservado, medido una sola vez", { placeholder: "title" });
-s.addText("Un dev que ha guiado todas las decisiones deja de ser una estimación imparcial. El nuestro guió el número de pasos, las tasas de aprendizaje, 72 configuraciones de modelo de lenguaje y la decodificación por dominio. Nada de eso es entrenamiento, pero todo es selección, y la selección deja huella.",
-  { placeholder: "body", h: 1.0 });
+s.addText("Un dev que ha guiado todas las decisiones deja de ser imparcial. El nuestro guió pasos, tasas, 72 configuraciones de modelo de lenguaje y la decodificación por dominio: nada de eso es entrenamiento, pero todo es selección.",
+  { placeholder: "body", h: 0.7 });
 tbl(s, [
   ["", { text: "Leída WER", options: { bold: true, align: "right" } }, { text: "Leída CER", options: { bold: true, align: "right" } },
    { text: "Espont. WER", options: { bold: true, align: "right" } }, { text: "Espont. CER", options: { bold: true, align: "right" } },
@@ -370,22 +415,17 @@ s.addNotes("Esta lámina es la que más me importa metodológicamente.\n\nUn dev
 s = pres.addSlide({ masterName: "CONTENIDO" });
 badge(s);
 s.addText("Limitaciones", { placeholder: "title" });
-const lims = [
-  ["El sistema entregado no tiene medición limpia propia",
-   "Se entrena sobre el split establecido, cuyo train contiene las frases de dev. Lo entregamos por comparabilidad con el baseline y porque ve un 15 % más de frases distintas: es una apuesta razonada, no medida."],
-  ["El barrido fue estrecho",
-   "Variamos pasos y tasa de aprendizaje. Tamaño de lote, repetición del habla espontánea, layer dropout, tratamiento de acentos y la inclusión de datos silver quedaron en sus valores por defecto."],
-  ["Tres semillas",
-   "Bastan para establecer que varias victorias aparentes eran ruido, pero son pocas para separar recetas que difieren menos que su dispersión."],
-  ["La mitad del ranking no se puede medir con fidelidad",
-   "El test espontáneo son íntegramente hablantes de sesenta años o más. En todo el corpus, esos hablantes aportan una transcripción humana y 2,90 de 35,41 horas, todas silver."],
-];
-lims.forEach((l, i) => {
-  const y = 1.75 + i * 1.18;
-  s.addShape(pres.ShapeType.ellipse, { x: M, y: y + 0.06, w: 0.17, h: 0.17, fill: { color: RUST }, line: { color: RUST }, objectName: `dot-${i}` });
-  s.addText(l[0], { x: M + 0.38, y, w: W - 0.38, h: 0.3, isTextBox: true, margin: 0, fontSize: 14, bold: true, color: INK, fontFace: THEME.bodyFontFace });
-  s.addText(l[1], { x: M + 0.38, y: y + 0.32, w: W - 0.38, h: 0.75, isTextBox: true, margin: 0, fontSize: 12.5, color: MUTED, fontFace: THEME.bodyFontFace, lineSpacingMultiple: 1.2 });
-});
+cards(s, [
+  { big: "1", label: "sola transcripción humana de hablantes de 60 o más años en todo el corpus — y el test espontáneo son íntegramente hablantes de esa edad" },
+  { big: "2 de 9", label: "hiperparámetros variados: solo pasos y tasa. Lote, upsampling, layer dropout, acentos y datos silver quedaron por defecto" },
+  { big: "3", label: "semillas: bastan para tumbar victorias aparentes, no para separar recetas que difieren menos que su dispersión" },
+], 1.85, 2.05, { bigSize: 30 });
+
+s.addText("Y la que más pesa: el sistema entregado no tiene medición limpia propia",
+  { x: M, y: 4.35, w: W, h: 0.35, isTextBox: true, margin: 0, fontSize: 17, bold: true, color: RUST, fontFace: THEME.bodyFontFace });
+s.addText("Se entrena sobre el split establecido, cuyo train contiene las frases de dev. Lo entregamos por comparabilidad con el baseline publicado y porque ve un 15 % más de frases distintas — pero eso es una apuesta razonada, no medida. El efecto de 1,1 puntos de la lámina 7 mide memorización y no sirve para justificarla.",
+  { x: M, y: 4.78, w: W, h: 1.0, isTextBox: true, margin: 0, fontSize: 14, color: INK, fontFace: THEME.bodyFontFace, lineSpacingMultiple: 1.25 });
+
 s.addNotes("Cuatro limitaciones, y las digo porque creo que declararlas fortalece el trabajo.\n\nLa primera, la más incómoda: el sistema que entregamos no tiene una medición limpia propia. Se entrena sobre el split establecido, cuyo train contiene las frases de dev. Lo entregamos por comparabilidad con el baseline publicado y porque ve un quince por ciento más de frases distintas. Pero eso último es una apuesta razonada, no medida, y el efecto de 1,1 puntos que medimos antes es memorización y no sirve para justificarla.\n\nSegunda: el barrido fue estrecho. Solo pasos y tasa de aprendizaje.\n\nTercera: tres semillas bastan para tumbar victorias aparentes, pero no para separar recetas parecidas.\n\nY la cuarta, la más seria: la mitad del ranking no la podemos medir con fidelidad. El test espontáneo son íntegramente hablantes de sesenta años o más, y en todo el corpus esos hablantes aportan UNA transcripción humana. El dominio que decide la mitad de nuestro puesto es el que menos podemos evaluar.");
 
 // ==================================================================== 13 ====
