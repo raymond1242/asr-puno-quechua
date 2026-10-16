@@ -65,7 +65,7 @@ WER; (2) lanzar el entrenamiento por defecto y comprobar si se recuperan los
 **Entregas generadas (no subidas), todas con el modelo del paso 500:**
 `submission/ckpt500_lm_v2/qxp.zip` (**recomendada**: LM con α y β robustos,
 sección 8.4), `submission/ckpt500_lm/qxp.zip` (LM, primera configuración) y
-`submission/qxp.zip` (greedy).
+`submission/ckpt500_greedy/qxp.zip` (greedy).
 
 **Actualización del 8 de octubre (sección 14), que sustituye a lo anterior:**
 la entrega recomendada es ahora **`submission/final_n500_lr2e-5_v3/qxp.zip`**
@@ -717,7 +717,7 @@ Tres de los cuatro números mejoran y uno empeora muy poco. Media: 9,28 / 2,15 �
 - **`submission/ckpt500_lm/qxp.zip`**: paso 500 + LM con `submission_v1.json`.
   Decodificar los 659 clips tardó 54 s. *Superada por `ckpt500_lm_v2`
   (sección 8.4).*
-- **`submission/qxp.zip`**: paso 500 en greedy (la generó `run_all.sh`).
+- **`submission/ckpt500_greedy/qxp.zip`**: paso 500 en greedy (la generó `run_all.sh`, que la escribe en `submission/qxp.*`; se movió aquí el 16 de octubre para que no pareciera la entrega final).
 
 Ambas tienen 659 filas en el orden de la plantilla de los organizadores, y cada
 clip se decodifica con el LM de su dominio, según la columna `type` de
