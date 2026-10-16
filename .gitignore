@@ -250,14 +250,10 @@ results/*/test/*
 results/*/test_spont/*
 results/omnilingual/*/*.tsv
 paper/*
-# ...except our own paper sources (the PDF and LaTeX by-products stay ignored,
-# see paper/.gitignore)
-!paper/.gitignore
-!paper/*.tex
-!paper/*.bib
-!paper/*.md
-!paper/*.sh
-!paper/sections/
+# Deliverables: track the sources, not the built artefacts
+# (see deliverables/paper/.gitignore for the LaTeX by-products)
+deliverables/paper/main.pdf
+deliverables/slides/*.pptx
 data/collao/*
 data/additional_data_16k/*
 data/prepare_collao_cpt.py
@@ -270,3 +266,4 @@ data/scripted/
 data/spontaneous/
 data/manifests/sharedtask*/
 submission/
+.DS_Store
