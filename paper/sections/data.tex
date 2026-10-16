@@ -6,13 +6,12 @@
 The task uses two Common Voice \cite{ardila2020commonvoice} releases for Puno
 Quechua \cite{huaman2026quechua}. \emph{Scripted Speech 27.0} holds 22{,}727 validated clips, 30.49 hours from 77
 speakers, drawn from only 2{,}067 distinct sentences -- so each sentence is read
-by roughly eleven different people. That ratio is ordinary for read-speech
-collection and it shapes every evaluation decision below.
+by roughly eleven different people.
 
 \emph{Spontaneous Speech 5.0} holds 7{,}305 clips, 35.41 hours from 110
-speakers, recorded as free answers to 150 questions. Only 1{,}222 clips carry a
-human transcription, 5.81 hours; the remaining 6{,}083 have none, because
-transcription requires a Quechua literacy few speakers have. The baseline
+speakers, recorded as free answers to 150 questions. Only 1{,}222 clips carry a human transcription, 5.81 hours; the remaining
+6{,}083 have none, because transcription requires a Quechua literacy few
+speakers have. The baseline
 release supplies automatic ``silver'' transcriptions for these, generated with
 omniASR \cite{keren2025omnilingual}, and we reuse 5{,}782 of them, adding about 21 hours of otherwise unusable speech.
 
@@ -31,7 +30,11 @@ adopting Puno forms --
 and each costs a whole word under WER.
 
 The published baseline predates the curated release and was trained on the raw
-text, which isolates the effect exactly: one fixed set of its hypotheses scores
+text, which isolates the effect exactly. We transcribed our scripted
+development set once with that model and scored the resulting transcriptions,
+unchanged, against each reference in turn. The model is identical in both
+measurements, so any difference between them is orthography and not acoustics.
+Those transcriptions score
 8.13 WER and 2.76 CER against the raw reference, and 16.08 and 3.77 against the
 curated one. Nearly eight points of word error rate are orthography rather than
 acoustics, and aligning the training text with the curated reference is the
@@ -51,8 +54,8 @@ We fold everything to the curated convention: lowercase, Unicode NFC,
 \texttt{a}--\texttt{z}, \texttt{ñ} and the apostrophe. Two choices were
 verified against the curated reference rather than assumed -- it contains no
 accented vowels and no hyphens in 2{,}067 sentences -- leaving a 29-symbol
-training alphabet, all of it present in the released checkpoint's 50-way CTC
-head.
+training alphabet, every symbol of which the baseline checkpoint can already
+emit: its CTC layer has 50 outputs, and our 29 are a subset of them.
 
 The folding is orthographic, not lexical: the organisers' curation also
 replaces whole word forms (\texttt{allqu}$\rightarrow$\texttt{alqu}), and we
@@ -64,16 +67,17 @@ spontaneous training tokens; we leave this untested.
 \label{sec:newsentences}
 
 With only 2{,}067 sentences in the corpus and all of them recorded, it seemed
-near certain that the scripted test would reuse them. It does not. Using only
-our own greedy hypotheses on the test audio -- no labels -- we measured the
-normalised edit distance from each to the nearest sentence in the pool. A
-development hypothesis whose sentence is in the pool has a median distance of
-0.000; with that sentence removed, 0.516. The test scores 0.480, and its
-hypotheses run eight to twelve words against a pool mean of four.
+near certain that the scripted test would reuse them. It does not. Using our
+own greedy hypotheses on the test audio -- no labels -- we measured the
+normalised edit distance from each to the nearest of the 2{,}067 sentences,
+calibrating against development audio where the answer is known. A development
+hypothesis whose sentence is in the pool sits at a median distance of 0.000;
+with that one sentence removed from the pool, 0.516. The test scores 0.480.
 
-That decides how the rest of this paper is measured: a development set whose
-sentences the model has heard from eleven other speakers will prefer systems
-that remember text over systems that recognise speech.
+Its sentences are therefore new, which decides how the rest of this paper is
+measured: a development set whose sentences the model has heard from eleven
+other speakers will prefer systems that remember text over systems that
+recognise speech.
 
 \subsection{Splits}
 \label{sec:splits}
@@ -93,9 +97,10 @@ portion falls to 339 scripted clips against 1{,}493; with 1{,}347 reference
 words, one WER point is thirteen words, and we treat differences below a few
 tenths as noise throughout.
 
-We use both: decisions are made on \texttt{sharedtask\_both}, which matches the
-condition the test is in, while the comparison against the published baseline
-is reported on \texttt{sharedtask}, the ruler the baseline was measured with.
+We use both, as Figure~\ref{fig:pipeline} summarises: decisions are made on
+\texttt{sharedtask\_both}, which matches the condition the test is in, while
+the comparison against the published baseline is reported on
+\texttt{sharedtask}, the ruler the baseline was measured with.
 The spontaneous side needs no reconstruction -- its release carries an official
 \texttt{split} column, which we adopt unchanged, excluding the 296 clips marked
 as test from training and development alike.

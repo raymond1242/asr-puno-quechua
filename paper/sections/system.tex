@@ -28,6 +28,20 @@ Fine-tuning runs for 500 updates at learning rate $2\times10^{-5}$
 than clip count: clips range from under two seconds to thirty, so any fixed
 count either exhausts memory on long clips or wastes the device on short ones.
 
+
+\begin{figure}[tb]
+\centering
+\includegraphics[width=\textwidth]{figures/pipeline_pastel.pdf}
+\caption{Data, splits and system. Two splits are built from the same
+normalised corpora. The submitted model trains on \texttt{sharedtask}, whose
+development sentences also occur in training; its sibling trains on
+\texttt{sharedtask\_both}, which shares neither speakers nor sentences and so
+yields the only measurement free of overlap. The dashed arrow marks what
+passes between them: the recipe is chosen on the sibling and applied to the
+submitted model, not its weights.}
+\label{fig:pipeline}
+\end{figure}
+
 \subsection{Decoding}
 
 Greedy CTC decoding commits to the most probable symbol at each 20\,ms frame
@@ -38,13 +52,18 @@ characters: Quechua builds words by chaining suffixes, and 77\% of the distinct
 word forms in the scripted sentence corpus occur exactly once, so a word-level
 model would never have seen the correct form of most words it must judge.
 
-We build character $n$-grams with modified Kneser-Ney smoothing
-\cite{chen1996smoothing} and verify each against KenLM \cite{heafield2011kenlm}
-by summing the probability of every character over 200 contexts; the largest
-deviation from one was of order $10^{-6}$. Decoding uses flashlight-text's
-lexicon-free beam search \cite{kahn2022flashlight}, which scores the language
-model on every emitted character rather than only at word boundaries, with beam
-width 64. A hypothesis scores
+The models are character $n$-grams estimated by counting, with modified
+Kneser-Ney smoothing \cite{chen1996smoothing} to reserve probability for
+sequences the training text never shows. We check each one against KenLM
+\cite{heafield2011kenlm}: a distribution must sum to one, so for 200 contexts
+we sum the probability of every possible next character; the largest deviation
+was of order $10^{-6}$.
+
+Decoding uses flashlight-text's \emph{lexicon-free} beam search
+\cite{kahn2022flashlight} with beam width 64. The qualifier matters: a
+conventional decoder consults the language model only when a word ends, against
+a fixed vocabulary, which a character model cannot use. A lexicon-free decoder
+scores it on every character as it is emitted. A hypothesis scores
 \begin{equation}
 \sum \log p_{\text{CTC}}
 \;+\; \alpha \sum \log P_{\text{LM}}

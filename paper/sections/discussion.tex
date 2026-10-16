@@ -3,10 +3,9 @@
 
 Read-speech corpora for low-resource languages are built the way this one was:
 a small pool of sentences recorded many times over by the few speakers who
-volunteer -- here 2{,}067 sentences and 77 speakers. Any split that separates
-speakers while using all the recordings therefore evaluates with complete text
-overlap, by construction rather than by oversight, since the training portion
-must contain every sentence in order to contain every clip. We report this as a
+volunteer -- here 2{,}067 sentences and 77 speakers. Any split that separates speakers while using all the recordings therefore
+evaluates with complete text overlap, by construction rather than oversight:
+the training portion must contain every sentence to contain every clip. We report this as a
 property of the benchmark, and it becomes consequential here because the shared
 task's own test draws on sentences outside the pool, so systems are selected
 under a different condition from the one they are judged under.

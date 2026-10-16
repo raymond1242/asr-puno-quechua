@@ -29,7 +29,8 @@ and Three Negative Results}
 \author{Raymond Negron \and Rosa Y. G. Paccotacya-Yanque}
 \authorrunning{R. Negron and R. Y. G. Paccotacya-Yanque}
 
-\institute{Universidad Cat\'olica San Pablo, Arequipa, Peru\\
+\institute{Department of Computing, Universidad Cat\'olica San Pablo,
+Arequipa, Peru\\
 \email{\{raymond.negron,rypaccotacya\}@ucsp.edu.pe}}
 
 \maketitle
@@ -54,7 +55,7 @@ sentences. We therefore also report a speaker- and text-disjoint split, and a
 held-out set measured once after freezing every decision. Three negative
 results follow: averaging CTC logits across seeds degrades recognition through
 a mechanism we identify, stronger masking is monotonically harmful, and the
-language model gain tuned on development data does not survive on held-out data.
+language model, tuned on development data, no longer helps on held-out data.
 
 \keywords{Automatic speech recognition \and Low-resource languages \and
 Quechua \and Evaluation methodology \and Self-supervised learning.}
@@ -71,6 +72,10 @@ Quechua \and Evaluation methodology \and Self-supervised learning.}
 
 % llncs v2.25 expects acknowledgements and declarations inside `credits`.
 \begin{credits}
+\subsubsection{\ackname}
+This work was developed using the computational infrastructure of Project
+No.~\todo{number} funded by ProCiencia.
+
 \subsubsection{\discintname}
 The authors have no competing interests to declare that are relevant to the
 content of this article.

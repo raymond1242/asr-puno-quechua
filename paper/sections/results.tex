@@ -4,9 +4,11 @@
 \begin{table}[tb]
 \centering\small
 \caption{Main results, all figures percentages, scored against the curated
-reference. The first block compares with the published baseline on the
-established split; the second gives the text-disjoint split, where the
-held-out row was measured once after every decision was frozen.}
+reference. The two blocks are \emph{different models} on \emph{different
+splits}. Above: the system we submit, against the published baseline, both on
+the established split. Below: its sibling, trained on the text-disjoint split
+and therefore the only model we can measure without sentence overlap; its
+held-out row was measured once, after every decision was frozen.}
 \label{tab:main}
 \begin{tabular}{lrrrrrr}
 \toprule
@@ -14,13 +16,14 @@ held-out row was measured once after every decision was frozen.}
 \cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
 System & WER & CER & WER & CER & WER & CER \\
 \midrule
-\multicolumn{7}{l}{\emph{\texttt{sharedtask} development (speaker-disjoint)}} \\
-Published baseline, converted & 16.08 & 3.77 & 10.23 & 1.39 & 13.15 & 2.58 \\
-This work & 9.23 & 3.01 & 9.06 & 1.30 & \textbf{9.14} & 2.16 \\
+\multicolumn{7}{l}{\emph{Submitted model, on \texttt{sharedtask} development (speaker-disjoint)}} \\
+\quad Published baseline, converted & 16.08 & 3.77 & 10.23 & 1.39 & 13.15 & 2.58 \\
+\quad This work & 9.23 & 3.01 & 9.06 & 1.30 & \textbf{9.14} & 2.16 \\
 \addlinespace
-\multicolumn{7}{l}{\emph{\texttt{sharedtask\_both} (speaker- and text-disjoint), mean of three seeds}} \\
-\quad development & 4.85 & 0.62 & 9.20 & 1.31 & 7.02 & 0.96 \\
-\quad held-out & 10.79 & 2.33 & 3.38 & 0.39 & 7.08 & 1.36 \\
+\multicolumn{7}{l}{\emph{Sibling model, trained and measured on \texttt{sharedtask\_both}}} \\
+\multicolumn{7}{l}{\emph{(speaker- and text-disjoint), mean of three seeds}} \\
+\quad on its development set & 4.85 & 0.62 & 9.20 & 1.31 & 7.02 & 0.96 \\
+\quad on its held-out set & 10.79 & 2.33 & 3.38 & 0.39 & 7.08 & 1.36 \\
 \bottomrule
 \end{tabular}
 \end{table}
