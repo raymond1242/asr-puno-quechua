@@ -136,6 +136,20 @@ const code = (t, o = {}) => ({ text: t, options: { fontFace: MONO, ...o } });
 const mvar = (t, o = {}) => ({ text: t, options: { fontFace: THEME.headFontFace, italic: true, ...o } });
 const txt = (t, o = {}) => ({ text: t, options: o });
 
+// Numbers carry the argument, so they are set bold and a touch larger than the
+// prose around them. Splits a sentence into runs and emphasises the figures.
+function emph(sentence, o = {}) {
+  const size = o.fontSize || 14;
+  return sentence
+    .split(/(\d[\d.,]*(?:\s?%)?|\b2e-5\b|\b1e-5\b|\b5e-5\b)/g)
+    .filter((part) => part !== "")
+    .map((part) =>
+      /^\d/.test(part)
+        ? { text: part, options: { ...o, bold: true, fontSize: size + 1.5 } }
+        : { text: part, options: { ...o } }
+    );
+}
+
 let tblN = 0;
 function tbl(slide, rows, opts = {}) {
   tblN += 1;
@@ -167,9 +181,12 @@ function tbl(slide, rows, opts = {}) {
       const text = typeof cell === "string" ? cell : cell.text;
       slide.addText(text, {
         x: cx, y, w: colW[c], h,
-        isTextBox: true, margin: [0, 0.08, 0, 0.02],
+        // right margin on every cell, left margin on all but the first,
+        // so a right-aligned figure never touches the label beside it
+        // margin is in POINTS, not inches: ~11 pt of gutter each side
+        isTextBox: true, margin: [0, 11, 0, c === 0 ? 1 : 11],
         // figures carry the result, so they run larger than the labels
-        fontSize: o.align === "right" && r > 0 ? fs + 2.5 : fs,
+        fontSize: o.align === "right" && r > 0 ? fs + 4.5 : fs,
         fontFace: THEME.bodyFontFace,
         color: o.color || INK, bold: o.bold || r === 0,
         align: o.align || "left", valign: "middle",
@@ -212,23 +229,22 @@ s.addText("Hablan con fluidez pero no escriben: la escolarización es en españo
 cards(s, [
   { big: "465.000", label: "hablantes de quechua de Puno" },
   { big: "66 h", label: "de habla recolectada con diseño participativo\npor Huaman et al. (2026)" },
-  { big: "4", label: "números componen el ranking: WER y CER\nen habla leída y espontánea" },
+  { big: "4", label: "números componen el ranking: WER y CER en\nscripted y spontaneous" },
   { big: "659", label: "clips en el test oficial\n438 leídos · 221 espontáneos" },
 ], 2.5, 1.55);
-s.addText("Promediar cuatro números descarta al mejor modelo del paper en habla leída:",
+s.addText("Promediar cuatro números descarta al mejor modelo del paper en scripted:",
   { x: M, y: 4.45, w: W, h: 0.3, isTextBox: true, margin: 0, fontSize: 14, color: INK, fontFace: THEME.bodyFontFace });
 tbl(s, [
-  [{ text: "Modelo del paper", options: { bold: true } }, { text: "Leída WER", options: { bold: true, align: "right" } }, { text: "Espont. WER", options: { bold: true, align: "right" } }, { text: "¿Sirve?", options: { bold: true } }],
+  [{ text: "Configuración del paper", options: { bold: true } }, { text: "scripted WER", options: { bold: true, align: "right" } }, { text: "spontaneous WER", options: { bold: true, align: "right" } }, { text: "Veredicto", options: { bold: true } }],
   [{ text: [code("xls-r + CPT"), txt(", solo validado")] }, { text: "1,19", options: { align: "right" } }, { text: "13,6", options: { align: "right", color: RUST } }, { text: "No: hunde dos de los cuatro", options: { color: MUTED } }],
   [{ text: [code("xls-r + CPT", { bold: true }), txt(", validado + silver", { bold: true })] }, { text: "2,11", options: { align: "right" } }, { text: "3,15", options: { align: "right" } }, { text: "Sí: equilibrado", options: { bold: true, color: GREEN } }],
-], { y: 4.85, colW: [4.4, 1.7, 1.9, 3.63], rowH: 0.4 });
-s.addNotes("El quechua de Puno lo hablan unas 465.000 personas, pero casi nadie lo escribe, porque la escolarización es en español. Por eso el ASR aquí no es una comodidad: una interfaz de texto deja fuera precisamente a la gente a la que queremos servir.\n\nDos cosas sobre la tarea. Partimos del corpus de 66 horas que publicaron los organizadores. Y el ranking promedia CUATRO números: WER y CER, en habla leída y en habla espontánea. Esto no es un detalle: descarta el modelo con mejor habla leída del paper, que tiene 1,19 de WER pero 13,6 en espontánea.");
+], { y: 4.85, colW: [4.6, 2.0, 2.3, 2.73], rowH: 0.4 });
+s.addNotes("El quechua de Puno lo hablan unas 465.000 personas, pero casi nadie lo escribe, porque la escolarización es en español. Por eso el ASR aquí no es una comodidad: una interfaz de texto deja fuera precisamente a la gente a la que queremos servir.\n\nDos cosas sobre la tarea. Partimos del corpus de 66 horas que publicaron los organizadores. Y el ranking promedia CUATRO números: WER y CER, en scripted y en spontaneous. Esto no es un detalle: descarta el modelo con mejor habla leída del paper, que tiene 1,19 de WER pero 13,6 en espontánea.");
 
 // ===================================================================== 3 ====
 s = pres.addSlide({ masterName: "CONTENIDO" });
 s.addText("Hallazgo 1: la ortografía vale casi ocho puntos", { placeholder: "title" });
-s.addText("El quechua de Puno no tiene ortografía estandarizada y los voluntarios de Common Voice escribieron como supieron. Los organizadores publicaron una referencia curada de las 2.067 frases: 629 cambian de grafía más allá de mayúsculas y puntuación.",
-  { placeholder: "body" });
+s.addText(emph("El quechua de Puno no tiene ortografía estandarizada y los voluntarios de Common Voice escribieron como supieron. Los organizadores publicaron una referencia curada de las 2.067 frases: 629 cambian de grafía más allá de mayúsculas y puntuación.", { fontSize: 15, color: MUTED }), { placeholder: "body" });
 cards(s, [
   { big: "allqu → alqu", label: "" },
   { big: "iskay → ishkay", label: "" },
@@ -241,8 +257,7 @@ tbl(s, [
   ["Texto crudo de Common Voice (con el que se entrenó el baseline)", { text: "8,13", options: { align: "right" } }, { text: "2,76", options: { align: "right" } }],
   [{ text: "Texto curado (contra el que puntúa el concurso)", options: { bold: true } }, { text: "16,08", options: { bold: true, align: "right", color: RUST } }, { text: "3,77", options: { bold: true, align: "right", color: RUST } }],
 ], { y: 3.95, colW: [8.2, 1.7, 1.73], rowH: 0.38 });
-s.addText("El modelo no cambió entre las dos medidas. Los 7,95 puntos de diferencia son ortografía, no acústica.",
-  { x: M, y: 5.6, w: W, h: 0.4, isTextBox: true, margin: 0, fontSize: 14, bold: true, color: RUST, fontFace: THEME.bodyFontFace });
+s.addText(emph("El modelo no cambió entre las dos medidas. Los 7,95 puntos de diferencia son ortografía, no acústica.", { fontSize: 14, color: RUST, bold: true }), { x: M, y: 5.6, w: W, h: 0.4, isTextBox: true, margin: 0, fontSize: 14, bold: true, color: RUST, fontFace: THEME.bodyFontFace });
 s.addNotes("Primer hallazgo, y el más rentable. El quechua de Puno no tiene ortografía estándar, así que los voluntarios escribieron como supieron. Los organizadores publicaron una referencia curada: de las 2.067 frases, 629 cambian de grafía. Son cambios de una letra —allqu pasa a alqu, iskay a ishkay— pero en WER cada uno cuesta una palabra entera.\n\nEl experimento aísla el efecto. Cogimos el modelo del paper, le hicimos transcribir el dev UNA vez, y esas transcripciones congeladas las puntuamos contra las dos referencias. Contra el texto crudo da 8,13. Contra el curado, 16,08. El modelo es el mismo en ambas medidas, así que esos casi ocho puntos son ortografía pura.");
 
 // ===================================================================== 4 ====
@@ -252,8 +267,7 @@ s.addImage({
   path: path.join(__dirname, "..", "paper", "figures", "pipeline_pastel.png"),
   x: 3.09, y: 1.56, w: 7.16, h: 4.85, objectName: "pipeline",
 });
-s.addText("Partimos del checkpoint publicado XLS-R-300M con pre-entrenamiento continuo, afinamos 500 pasos sobre el texto curado y decodificamos habla espontánea con un modelo de lenguaje de caracteres.",
-  { x: M, y: 6.52, w: W, h: 0.5, isTextBox: true, margin: 0, fontSize: 13, color: MUTED, fontFace: THEME.bodyFontFace, align: "center" });
+s.addText(emph("Partimos del checkpoint publicado XLS-R-300M con pre-entrenamiento continuo, afinamos 500 pasos sobre el texto curado y decodificamos spontaneous con un modelo de lenguaje de caracteres.", { fontSize: 13, color: MUTED }), { x: M, y: 6.52, w: W, h: 0.5, isTextBox: true, margin: 0, fontSize: 13, color: MUTED, fontFace: THEME.bodyFontFace, align: "center" });
 s.addNotes("Este es el sistema. De izquierda a derecha: los dos corpus más la referencia curada entran en la normalización, que lo pliega todo a un alfabeto de 29 símbolos.\n\nDe ahí salen DOS splits, y esto es lo importante. El de la izquierda separa por hablante, como hacía el baseline, pero comparte las frases entre train y dev. El de la derecha separa por hablante Y por texto.\n\nEl modelo que entregamos se entrena con el primero. Su hermano, con el segundo, y es el único del que tenemos una medición limpia. La flecha punteada marca lo que pasa de uno a otro: la receta, no los pesos.\n\nAbajo a la izquierda, la decodificación: habla leída con argmax voraz, espontánea con beam search y un modelo de lenguaje de caracteres de orden 8.");
 
 // ===================================================================== 5 ====
@@ -263,8 +277,8 @@ s.addText("Sobre el split establecido, el mismo que usó el baseline, y contra l
   { placeholder: "body", h: 0.45 });
 tbl(s, [
   [{ text: "Sistema", options: { bold: true } },
-   { text: "Leída WER", options: { bold: true, align: "right" } }, { text: "Leída CER", options: { bold: true, align: "right" } },
-   { text: "Espont. WER", options: { bold: true, align: "right" } }, { text: "Espont. CER", options: { bold: true, align: "right" } },
+   { text: "scripted WER", options: { bold: true, align: "right" } }, { text: "scripted CER", options: { bold: true, align: "right" } },
+   { text: "spontaneous WER", options: { bold: true, align: "right" } }, { text: "spontaneous CER", options: { bold: true, align: "right" } },
    { text: "Media WER", options: { bold: true, align: "right" } }, { text: "Media CER", options: { bold: true, align: "right" } }],
   ["Baseline publicado, convertido", { text: "16,08", options: { align: "right" } }, { text: "3,77", options: { align: "right" } },
    { text: "10,23", options: { align: "right" } }, { text: "1,39", options: { align: "right" } },
@@ -275,7 +289,7 @@ tbl(s, [
 ], { y: 2.3, colW: [4.0, 1.28, 1.28, 1.35, 1.35, 1.28, 1.09], rowH: 0.42 });
 takeaways(s, [
   { head: "Comparación válida", body: "Mismo split, misma referencia y mismo modelo base que el baseline. Es una comparación de igual a igual." },
-  { head: "Casi todo es ortografía", body: "La mejora de 6,85 puntos en habla leída es del mismo orden que el desajuste de 7,95 que medimos antes." },
+  { head: "Casi todo es ortografía", body: "La mejora de 6,85 puntos en scripted es del mismo orden que el desajuste de 7,95 que medimos antes." },
   { head: "Equilibrio entre dominios", body: "Mejora en los cuatro números a la vez, que es lo que exige el ranking por media." },
 ], 4.55);
 s.addNotes("Este es el resultado. Mejoramos el baseline de 13,15 a 9,14 de WER medio, sobre el mismo split y con la misma referencia. Es una comparación de igual a igual: mismo modelo base, misma regla de medir.\n\nY quiero ser honesto sobre de dónde viene la mejora. En habla leída ganamos 6,85 puntos, que es del mismo orden que los 7,95 del desajuste ortográfico de la lámina anterior. Es decir: la mayor parte de lo que ganamos es ortografía, no acústica. Mejoramos en los cuatro números, que es lo que exige el ranking.");
@@ -283,28 +297,36 @@ s.addNotes("Este es el resultado. Mejoramos el baseline de 13,15 a 9,14 de WER m
 // ===================================================================== 6 ====
 s = pres.addSlide({ masterName: "CONTENIDO" });
 s.addText("Hallazgo 2: el test no reutiliza las frases del corpus", { placeholder: "title" });
-s.addText("Solo hay 2.067 frases y todas están grabadas, así que parecía seguro que el test las reutilizaría. Sin etiquetas: medimos la distancia de edición de cada hipótesis a la frase más cercana del corpus, calibrando con el dev.",
-  { placeholder: "body", h: 0.75 });
+s.addText(emph("Solo hay 2.067 frases y todas están grabadas, así que parecía seguro que el test las reutilizaría. Sin etiquetas: medimos la distancia de edición de cada hipótesis a la frase más cercana del corpus, calibrando con el dev.", { fontSize: 15, color: MUTED }), { placeholder: "body", h: 0.75 });
 tbl(s, [
   [{ text: "Condición", options: { bold: true } }, { text: "Distancia mediana", options: { bold: true, align: "right" } }],
   ["Dev, con su frase presente en el corpus", { text: "0,000", options: { align: "right" } }],
   ["Dev, quitando su frase del corpus", { text: "0,516", options: { align: "right" } }],
-  [{ text: "Test, habla leída", options: { bold: true } }, { text: "0,480", options: { bold: true, align: "right", color: RUST } }],
-], { y: 2.75, w: 8.6, colW: [6.3, 2.3], rowH: 0.4 });
-s.addText([
-  { text: "El test se comporta como el caso «frase quitada».\n", options: { bold: true, color: RUST, breakLine: true } },
-  { text: "Sus frases son nuevas, y además más largas: de ocho a doce palabras frente a una media de cuatro en el corpus.\n\n", options: { color: MUTED, breakLine: true } },
-  { text: "Esto decide cómo se mide todo lo demás: un dev cuyas frases el modelo ha oído a otros once hablantes premia a los sistemas que recuerdan texto, no a los que reconocen habla.", options: { color: INK } },
-], { x: 9.9, y: 2.75, w: 2.6, h: 2.6, isTextBox: true, margin: 0, fontSize: 12, fontFace: THEME.bodyFontFace, lineSpacingMultiple: 1.2 });
+  [{ text: [code("Test"), txt(", scripted", { bold: true })], options: { bold: true } }, { text: "0,480", options: { bold: true, align: "right", color: RUST } }],
+], { y: 2.6, w: 7.5, colW: [5.1, 2.4], rowH: 0.42 });
+
+s.addShape(pres.ShapeType.roundRect, { x: 8.9, y: 2.6, w: 3.6, h: 1.75, rectRadius: 0.06,
+  fill: { color: CARD }, line: { color: CARD }, objectName: "card-test" });
+s.addText(emph("0,480", { fontSize: 34, color: RUST }), { x: 9.18, y: 2.78, w: 3.1, h: 0.6, isTextBox: true, margin: 0,
+  fontSize: 34, color: RUST, fontFace: THEME.headFontFace, valign: "middle" });
+s.addText("la distancia del test: se comporta como el caso «frase quitada», no como «frase presente»",
+  { x: 9.18, y: 3.42, w: 3.1, h: 0.8, isTextBox: true, margin: 0, fontSize: 12,
+    color: MUTED, fontFace: THEME.bodyFontFace, lineSpacingMultiple: 1.15 });
+
+s.addText(emph("Sus frases son nuevas, y además más largas: de ocho a doce palabras frente a una media de cuatro en el corpus.", { fontSize: 14, color: INK }),
+  { x: 8.9, y: 4.65, w: 3.6, h: 0.9, isTextBox: true, margin: 0, fontFace: THEME.bodyFontFace, lineSpacingMultiple: 1.25 });
+
+s.addText("Esto decide cómo se mide todo lo demás: un dev cuyas frases el modelo ha oído a otros once hablantes premia a los sistemas que recuerdan texto, no a los que reconocen habla.",
+  { x: M, y: 5.5, w: 7.5, h: 0.9, isTextBox: true, margin: 0, fontSize: 15, bold: true, color: RUST, fontFace: THEME.bodyFontFace, lineSpacingMultiple: 1.25 });
+
 s.addNotes("Segundo hallazgo. El corpus tiene solo 2.067 frases y todas están grabadas, así que dábamos por hecho que el test las reutilizaría. Fuimos a comprobarlo.\n\nEl test llega sin transcripciones, así que la comprobación no puede usar etiquetas. Lo que hicimos: transcribir el audio del test con nuestro propio sistema y medir, para cada hipótesis, la distancia de edición a la frase más parecida del corpus. Calibramos con el dev, donde sí sabemos la respuesta.\n\nUna hipótesis del dev cuya frase está en el corpus queda a distancia cero. Si quitamos esa frase del corpus, sube a 0,516. El test da 0,480: se comporta como el caso de frase no vista. Son frases nuevas.");
 
 // ===================================================================== 7 ====
 s = pres.addSlide({ masterName: "CONTENIDO" });
 s.addText("Hallazgo 3: cuánto vale haber oído la frase", { placeholder: "title" });
-s.addText("El split establecido comparte todas sus frases de evaluación con el entrenamiento, y no por descuido: con 2.067 frases y 77 hablantes, no hay otra forma de usar las 22.727 grabaciones.",
-  { placeholder: "body", h: 0.65 });
+s.addText(emph("El split establecido comparte todas sus frases de evaluación con el entrenamiento, y no por descuido: con 2.067 frases y 77 hablantes, no hay otra forma de usar las 22.727 grabaciones.", { fontSize: 15, color: MUTED }), { placeholder: "body", h: 0.65 });
 tbl(s, [
-  [{ text: "Entrenamiento", options: { bold: true } }, { text: "¿Oyó las frases de dev?", options: { bold: true } }, { text: "WER leída", options: { bold: true, align: "right" } }],
+  [{ text: "Entrenamiento", options: { bold: true } }, { text: "¿Oyó las frases de dev?", options: { bold: true } }, { text: "scripted WER", options: { bold: true, align: "right" } }],
   [{ text: [mvar("A"), txt("  ·  39,94 h")] }, "No", { text: "5,20  /  4,97", options: { align: "right" } }],
   [{ text: [mvar("B", { bold: true }), txt("eq", { bold: true, subscript: true }), txt("  ·  39,94 h", { bold: true })] },
    { text: [txt("Sí, con las mismas horas que ", { bold: true }), mvar("A", { bold: true })] },
@@ -322,8 +344,7 @@ s.addNotes("Tercer hallazgo, y el que creo que sobrevivirá al sistema.\n\nEl sp
 // ===================================================================== 8 ====
 s = pres.addSlide({ masterName: "CONTENIDO" });
 s.addText("Cuántos pasos entrenar, y cuánto es ruido", { placeholder: "title" });
-s.addText("Partiendo de un checkpoint ya adaptado hace falta mucho menos entrenamiento que los 8.000 pasos de la receta original. Entre 250 y 1.000 pasos, y con tasas de 1e-5 a 5e-5, todo cae entre 7,1 y 7,3 de WER medio.",
-  { placeholder: "body", h: 0.75 });
+s.addText(emph("Partiendo de un checkpoint ya adaptado hace falta mucho menos entrenamiento que los 8.000 pasos de la receta original. Entre 250 y 1.000 pasos, y con tasas de 1e-5 a 5e-5, todo cae entre 7,1 y 7,3 de WER medio.", { fontSize: 15, color: MUTED }), { placeholder: "body", h: 0.75 });
 cards(s, [
   { big: "7,02", label: "WER medio con el dev disjunto en texto\n(339 clips): desviación 0,19" },
   { big: "9,23", label: "WER medio con el dev por hablante\n(1.493 clips): desviación 0,08" },
@@ -340,8 +361,7 @@ s.addNotes("Sobre cuánto entrenar. Partiendo de un checkpoint ya adaptado al qu
 // ===================================================================== 9 ====
 s = pres.addSlide({ masterName: "CONTENIDO" });
 s.addText("Lo que no funcionó: promediar modelos", { placeholder: "title" });
-s.addText("Un ruido de 0,3 entre semillas es justo lo que el ensemble debería eliminar, así que esperábamos una ganancia. Ninguna de las dos formas de combinar la da, y el fallo tiene un mecanismo que pudimos medir.",
-  { placeholder: "body", h: 0.75 });
+s.addText(emph("Un ruido de 0,3 entre semillas es justo lo que el ensemble debería eliminar, así que esperábamos una ganancia. Ninguna de las dos formas de combinar la da, y el fallo tiene un mecanismo que pudimos medir.", { fontSize: 15, color: MUTED }), { placeholder: "body", h: 0.75 });
 tbl(s, [
   [{ text: "Sistema", options: { bold: true } }, { text: "Media WER", options: { bold: true, align: "right" } }, { text: "Media CER", options: { bold: true, align: "right" } }],
   [{ text: "Media de las tres semillas por separado", options: { bold: true } }, { text: "7,02", options: { bold: true, align: "right" } }, { text: "0,96", options: { bold: true, align: "right" } }],
@@ -362,8 +382,7 @@ s = pres.addSlide({ masterName: "CONTENIDO" });
 s.addText("Lo que no funcionó: máscara y modelo de lenguaje", { placeholder: "title" });
 s.addText("Más regularización",
   { x: M, y: 1.45, w: 5.6, h: 0.3, isTextBox: true, margin: 0, fontSize: 16, bold: true, color: RUST, fontFace: THEME.bodyFontFace });
-s.addText("El sobreajuste pasados los 1.000 pasos era el fallo que observamos, y SpecAugment lo ataca directamente. Subir la probabilidad de enmascarado desde 0,05 empeora de forma monótona, y en los cuatro números.",
-  { x: M, y: 1.82, w: 5.6, h: 1.0, isTextBox: true, margin: 0, fontSize: 13, color: MUTED, fontFace: THEME.bodyFontFace, lineSpacingMultiple: 1.2 });
+s.addText(emph("El sobreajuste pasados los 1.000 pasos era el fallo que observamos, y SpecAugment lo ataca directamente. Subir la probabilidad de enmascarado desde 0,05 empeora de forma monótona, y en los cuatro números.", { fontSize: 13, color: MUTED }), { x: M, y: 1.82, w: 5.6, h: 1.0, isTextBox: true, margin: 0, fontSize: 13, color: MUTED, fontFace: THEME.bodyFontFace, lineSpacingMultiple: 1.2 });
 tbl(s, [
   [{ text: [code("mask_time_prob", { bold: true })] }, { text: "Media WER", options: { bold: true, align: "right" } }],
   [{ text: "0,05  (por defecto)", options: { bold: true } }, { text: "6,81", options: { bold: true, align: "right" } }],
@@ -372,28 +391,25 @@ tbl(s, [
 ], { x: M, y: 2.95, w: 5.6, colW: [3.5, 2.1], rowH: 0.38 });
 s.addText("El modelo de lenguaje deja de ayudar",
   { x: 7.1, y: 1.45, w: 5.4, h: 0.3, isTextBox: true, margin: 0, fontSize: 16, bold: true, color: RUST, fontFace: THEME.bodyFontFace });
-s.addText("En habla leída ninguna configuración gana de forma medible: todas quedan a ±0,15 de la decodificación voraz, unas dos palabras. Por eso el sistema final decodifica habla leída sin modelo de lenguaje.",
-  { x: 7.1, y: 1.82, w: 5.4, h: 1.0, isTextBox: true, margin: 0, fontSize: 13, color: MUTED, fontFace: THEME.bodyFontFace, lineSpacingMultiple: 1.2 });
+s.addText(emph("En habla leída ninguna configuración gana de forma medible: todas quedan a ±0,15 de la decodificación voraz, unas dos palabras. Por eso el sistema final decodifica scripted sin modelo de lenguaje.", { fontSize: 13, color: MUTED }), { x: 7.1, y: 1.82, w: 5.4, h: 1.0, isTextBox: true, margin: 0, fontSize: 13, color: MUTED, fontFace: THEME.bodyFontFace, lineSpacingMultiple: 1.2 });
 tbl(s, [
   [{ text: "Semilla", options: { bold: true } }, { text: "Dev", options: { bold: true, align: "right" } }, { text: "Heldout", options: { bold: true, align: "right" } }],
   ["42", { text: "+0,31", options: { align: "right" } }, { text: "0,00", options: { align: "right" } }],
   ["43", { text: "+0,17", options: { align: "right" } }, { text: "−0,04", options: { align: "right", color: RUST } }],
   ["44", { text: "+0,12", options: { align: "right" } }, { text: "−0,08", options: { align: "right", color: RUST } }],
 ], { x: 7.1, y: 2.95, w: 5.4, colW: [2.0, 1.7, 1.7], rowH: 0.38 });
-s.addText("Ganancia en WER de habla espontánea frente a decodificación voraz. En el dev gana entre 0,12 y 0,31; en el conjunto reservado, nada.",
-  { x: 7.1, y: 4.85, w: 5.4, h: 0.6, isTextBox: true, margin: 0, fontSize: 12, color: MUTED, fontFace: THEME.bodyFontFace, lineSpacingMultiple: 1.2 });
+s.addText(emph("Ganancia en WER de spontaneous frente a decodificación voraz. En el dev gana entre 0,12 y 0,31; en el conjunto reservado, nada.", { fontSize: 12, color: MUTED }), { x: 7.1, y: 4.85, w: 5.4, h: 0.6, isTextBox: true, margin: 0, fontSize: 12, color: MUTED, fontFace: THEME.bodyFontFace, lineSpacingMultiple: 1.2 });
 s.addText("Una ganancia ajustada sobre el dev no sobrevivió a un conjunto limpio, aun habiéndose ajustado sobre el split disjunto en texto.",
   { x: M, y: 5.75, w: W, h: 0.5, isTextBox: true, margin: 0, fontSize: 14, bold: true, color: RUST, fontFace: THEME.bodyFontFace });
-s.addNotes("Las otras dos cosas que no funcionaron.\n\nA la izquierda, la regularización. El sobreajuste pasados los mil pasos era el fallo que observamos, y SpecAugment lo ataca directamente. Subir el enmascarado empeora de forma monótona: 6,81, 7,05, 7,68. Y empeora en los cuatro números. Con una receta de 500 pasos hay poco tiempo para sobreajustar, y la máscara quita evidencia que el modelo tiene pocas ocasiones de ver.\n\nA la derecha, el modelo de lenguaje. En habla leída ninguna configuración gana de forma medible, así que el sistema final decodifica habla leída sin él. En espontánea sí gana en el dev, entre 0,12 y 0,31 según la semilla. Pero en el conjunto reservado gana cero y pierde 0,04 y 0,08.\n\nEs decir: una ganancia ajustada sobre el dev no sobrevivió a un conjunto limpio, y eso que la habíamos ajustado sobre el split disjunto en texto. Lo mantenemos porque el efecto está dentro del ruido en ambas direcciones, pero ya no afirmamos que ayude.");
+s.addNotes("Las otras dos cosas que no funcionaron.\n\nA la izquierda, la regularización. El sobreajuste pasados los mil pasos era el fallo que observamos, y SpecAugment lo ataca directamente. Subir el enmascarado empeora de forma monótona: 6,81, 7,05, 7,68. Y empeora en los cuatro números. Con una receta de 500 pasos hay poco tiempo para sobreajustar, y la máscara quita evidencia que el modelo tiene pocas ocasiones de ver.\n\nA la derecha, el modelo de lenguaje. En habla leída ninguna configuración gana de forma medible, así que el sistema final decodifica scripted sin él. En espontánea sí gana en el dev, entre 0,12 y 0,31 según la semilla. Pero en el conjunto reservado gana cero y pierde 0,04 y 0,08.\n\nEs decir: una ganancia ajustada sobre el dev no sobrevivió a un conjunto limpio, y eso que la habíamos ajustado sobre el split disjunto en texto. Lo mantenemos porque el efecto está dentro del ruido en ambas direcciones, pero ya no afirmamos que ayude.");
 
 // ==================================================================== 11 ====
 s = pres.addSlide({ masterName: "CONTENIDO" });
 s.addText("El conjunto reservado, medido una sola vez", { placeholder: "title" });
-s.addText("Un dev que ha guiado todas las decisiones deja de ser imparcial. El nuestro guió pasos, tasas, 72 configuraciones de modelo de lenguaje y la decodificación por dominio: nada de eso es entrenamiento, pero todo es selección.",
-  { placeholder: "body", h: 0.7 });
+s.addText(emph("Un dev que ha guiado todas las decisiones deja de ser imparcial. El nuestro guió pasos, tasas, 72 configuraciones de modelo de lenguaje y la decodificación por dominio: nada de eso es entrenamiento, pero todo es selección.", { fontSize: 15, color: MUTED }), { placeholder: "body", h: 0.7 });
 tbl(s, [
-  ["", { text: "Leída WER", options: { bold: true, align: "right" } }, { text: "Leída CER", options: { bold: true, align: "right" } },
-   { text: "Espont. WER", options: { bold: true, align: "right" } }, { text: "Espont. CER", options: { bold: true, align: "right" } },
+  ["", { text: "scripted WER", options: { bold: true, align: "right" } }, { text: "scripted CER", options: { bold: true, align: "right" } },
+   { text: "spontaneous WER", options: { bold: true, align: "right" } }, { text: "spontaneous CER", options: { bold: true, align: "right" } },
    { text: "Media WER", options: { bold: true, align: "right" } }],
   [{ text: "Desarrollo", options: { bold: true } }, { text: "4,85", options: { align: "right" } }, { text: "0,62", options: { align: "right" } },
    { text: "9,20", options: { align: "right" } }, { text: "1,31", options: { align: "right" } }, { text: "7,02", options: { align: "right" } }],
@@ -418,8 +434,7 @@ cards(s, [
 
 s.addText("Y la que más pesa: el sistema entregado no tiene medición limpia propia",
   { x: M, y: 4.35, w: W, h: 0.35, isTextBox: true, margin: 0, fontSize: 17, bold: true, color: RUST, fontFace: THEME.bodyFontFace });
-s.addText("Se entrena sobre el split establecido, cuyo train contiene las frases de dev. Lo entregamos por comparabilidad con el baseline publicado y porque ve un 15 % más de frases distintas — pero eso es una apuesta razonada, no medida. El efecto de 1,1 puntos de la lámina 7 mide memorización y no sirve para justificarla.",
-  { x: M, y: 4.78, w: W, h: 1.0, isTextBox: true, margin: 0, fontSize: 14, color: INK, fontFace: THEME.bodyFontFace, lineSpacingMultiple: 1.25 });
+s.addText(emph("Se entrena sobre el split establecido, cuyo train contiene las frases de dev. Lo entregamos por comparabilidad con el baseline publicado y porque ve un 15 % más de frases distintas — pero eso es una apuesta razonada, no medida. El efecto de 1,1 puntos de la lámina 7 mide memorización y no sirve para justificarla.", { fontSize: 14, color: INK }), { x: M, y: 4.78, w: W, h: 1.0, isTextBox: true, margin: 0, fontSize: 14, color: INK, fontFace: THEME.bodyFontFace, lineSpacingMultiple: 1.25 });
 
 s.addNotes("Cuatro limitaciones, y las digo porque creo que declararlas fortalece el trabajo.\n\nLa primera, la más incómoda: el sistema que entregamos no tiene una medición limpia propia. Se entrena sobre el split establecido, cuyo train contiene las frases de dev. Lo entregamos por comparabilidad con el baseline publicado y porque ve un quince por ciento más de frases distintas. Pero eso último es una apuesta razonada, no medida, y el efecto de 1,1 puntos que medimos antes es memorización y no sirve para justificarla.\n\nSegunda: el barrido fue estrecho. Solo pasos y tasa de aprendizaje.\n\nTercera: tres semillas bastan para tumbar victorias aparentes, pero no para separar recetas parecidas.\n\nY la cuarta, la más seria: la mitad del ranking no la podemos medir con fidelidad. El test espontáneo son íntegramente hablantes de sesenta años o más, y en todo el corpus esos hablantes aportan UNA transcripción humana. El dominio que decide la mitad de nuestro puesto es el que menos podemos evaluar.");
 
@@ -433,8 +448,7 @@ cards(s, [
 ], 2.1, 1.95, { bigSize: 25 });
 s.addText("Dos direcciones a futuro",
   { x: M, y: 4.5, w: W, h: 0.3, isTextBox: true, margin: 0, fontSize: 16, bold: true, color: RUST, fontFace: THEME.bodyFontFace });
-s.addText("Un dev disjunto en texto construido a partir del split oficial de Common Voice daría 679 clips honestos en vez de 339, a cambio de seis horas de audio de entrenamiento. Y, más importante, transcripciones humanas de hablantes mayores harían medible por primera vez la mitad de este benchmark.",
-  { x: M, y: 4.88, w: W, h: 0.8, isTextBox: true, margin: 0, fontSize: 14, color: INK, fontFace: THEME.bodyFontFace, lineSpacingMultiple: 1.25 });
+s.addText(emph("Un dev disjunto en texto construido a partir del split oficial de Common Voice daría 679 clips honestos en vez de 339, a cambio de seis horas de audio de entrenamiento. Y, más importante, transcripciones humanas de hablantes mayores harían medible por primera vez la mitad de este benchmark.", { fontSize: 14, color: INK }), { x: M, y: 4.88, w: W, h: 0.8, isTextBox: true, margin: 0, fontSize: 14, color: INK, fontFace: THEME.bodyFontFace, lineSpacingMultiple: 1.25 });
 s.addText([txt("Código, splits y configuraciones:  "), code("github.com/raymond1242/asr-puno-quechua")],
   { x: M, y: 6.1, w: W, h: 0.3, isTextBox: true, margin: 0, fontSize: 12, color: MUTED, fontFace: THEME.bodyFontFace });
 s.addNotes("Para cerrar, tres cosas.\n\nMejoramos el baseline publicado de 13,15 a 9,14 de WER medio, sobre el mismo split y con la misma referencia. Y somos explícitos en que casi todo ese avance es ortografía, no acústica.\n\nSegundo, y creo que es lo que más puede durar: pusimos número al solapamiento de frases del benchmark establecido. Vale 1,1 puntos, medidos con un experimento controlado, y mostramos que el test del propio concurso no comparte esas frases.\n\nY tercero, tres resultados negativos reproducibles, con el mecanismo explicado en el caso del ensemble.\n\nDos direcciones a futuro. Un dev disjunto en texto construido sobre el split oficial de Common Voice daría el doble de clips honestos. Y, sobre todo, transcripciones humanas de hablantes mayores: harían medible por primera vez la mitad de este benchmark.\n\nTodo el código y los splits están en el repositorio. Muchas gracias.");
