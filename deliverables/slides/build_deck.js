@@ -61,9 +61,10 @@ pres.defineSlideMaster({
   title: "CONTENIDO",
   background: { color: "FFFFFF" },
   objects: [
-    { placeholder: { options: { name: "title", type: "title", x: M + 0.72, y: 0.46, w: W - 0.72, h: 0.72,
+    { line: { x: M, y: 0.58, w: 0.52, h: 0, line: { color: RUST, width: 2.5 } } },
+    { placeholder: { options: { name: "title", type: "title", x: M, y: 0.74, w: W, h: 0.72,
         fontSize: 29, color: INK, fontFace: THEME.headFontFace, valign: "middle", align: "left", margin: 0 }, text: "" } },
-    { placeholder: { options: { name: "body", type: "body", x: M, y: 1.42, w: W, h: 0.9,
+    { placeholder: { options: { name: "body", type: "body", x: M, y: 1.64, w: W, h: 0.9,
         fontSize: 15, color: MUTED, fontFace: THEME.bodyFontFace, valign: "top", align: "left", margin: 0, lineSpacingMultiple: 1.2 }, text: "" } },
   ],
   slideNumber: { x: 12.55, y: 6.92, fontSize: 10, color: "AAAAAA", fontFace: THEME.bodyFontFace },
@@ -73,27 +74,14 @@ pres.defineSlideMaster({
   title: "CIERRE",
   background: { color: "FFFFFF" },
   objects: [
-    { placeholder: { options: { name: "title", type: "title", x: M, y: 0.8, w: W, h: 1.0,
+    { line: { x: M, y: 0.72, w: 0.52, h: 0, line: { color: RUST, width: 2.5 } } },
+    { placeholder: { options: { name: "title", type: "title", x: M, y: 0.88, w: W, h: 1.0,
         fontSize: 34, color: INK, fontFace: THEME.headFontFace, valign: "middle", align: "left", margin: 0 }, text: "" } },
   ],
   slideNumber: { x: 12.55, y: 6.92, fontSize: 10, color: "AAAAAA", fontFace: THEME.bodyFontFace },
 });
 
 // ----------------------------------------------------------------- helpers --
-let badgeNum = 0;
-function badge(slide) {
-  badgeNum += 1;
-  slide.addShape(pres.ShapeType.ellipse, {
-    x: M, y: 0.5, w: 0.56, h: 0.56, fill: { color: RUST }, line: { color: RUST },
-    objectName: `badge-${badgeNum}`,
-  });
-  slide.addText(String(badgeNum), {
-    x: M, y: 0.5, w: 0.56, h: 0.56, align: "center", valign: "middle",
-    fontSize: 15, bold: true, color: "FFFFFF", fontFace: THEME.bodyFontFace,
-    isTextBox: true, margin: 0,
-  });
-}
-
 // A row of beige cards: [{ big, label }]
 function cards(slide, items, y, h = 1.45, opts = {}) {
   const gap = 0.3;
@@ -146,9 +134,10 @@ function tbl(slide, rows, opts = {}) {
   const y0 = opts.y;
   const colW = opts.colW;
   const width = colW.reduce((a, b) => a + b, 0);
-  const rowH = opts.rowH || 0.38;
-  const fs = opts.fontSize || 13;
-  const headH = rowH;
+  const rowH = opts.rowH || 0.42;
+  const fs = opts.fontSize || 14;
+  const headH = rowH + 0.04;
+  const PAD = 0.07;   // aire sobre y bajo los filetes, como \addlinespace
 
   const rule = (y, pt, color) =>
     slide.addShape(pres.ShapeType.line, {
@@ -158,7 +147,7 @@ function tbl(slide, rows, opts = {}) {
     });
 
   rows.forEach((row, r) => {
-    const y = y0 + (r === 0 ? 0 : headH + (r - 1) * rowH);
+    const y = y0 + (r === 0 ? PAD : headH + PAD * 2 + (r - 1) * rowH);
     let cx = x0;
     row.forEach((cell, c) => {
       const o = typeof cell === "string" ? {} : cell.options || {};
@@ -166,7 +155,9 @@ function tbl(slide, rows, opts = {}) {
       slide.addText(text, {
         x: cx, y, w: colW[c], h: r === 0 ? headH : rowH,
         isTextBox: true, margin: [0, 0.08, 0, 0.02],
-        fontSize: fs, fontFace: THEME.bodyFontFace,
+        // las cifras, alineadas a la derecha, van un punto mayores
+        fontSize: o.align === "right" && r > 0 ? fs + 1 : fs,
+        fontFace: THEME.bodyFontFace,
         color: o.color || INK, bold: o.bold || r === 0,
         align: o.align || "left", valign: "middle",
         objectName: `cell-${tblN}-${r}-${c}`,
@@ -175,10 +166,10 @@ function tbl(slide, rows, opts = {}) {
     });
   });
 
-  const bottom = y0 + headH + (rows.length - 1) * rowH;
-  rule(y0, 1.4, INK);                 // toprule
-  rule(y0 + headH, 0.6, "9A8F88");    // midrule
-  rule(bottom, 1.4, INK);             // bottomrule
+  const bottom = y0 + headH + PAD * 2 + (rows.length - 1) * rowH + PAD;
+  rule(y0, 1.5, INK);                       // \toprule
+  rule(y0 + headH + PAD, 0.85, "6E625B");   // \midrule
+  rule(bottom, 1.5, INK);                   // \bottomrule
   return bottom;
 }
 
@@ -202,7 +193,6 @@ s.addNotes("Buenos días. Presento el sistema del equipo Innova para la Tarea 1 
 
 // ===================================================================== 2 ====
 s = pres.addSlide({ masterName: "CONTENIDO" });
-badge(s);
 s.addText("El quechua de Puno y por qué ASR", { placeholder: "title" });
 s.addText("Hablan con fluidez pero no escriben: la escolarización es en español. Por eso aquí el ASR no es una comodidad — una interfaz de texto excluye justo a quien debería servir.",
   { placeholder: "body", h: 0.6 });
@@ -223,7 +213,6 @@ s.addNotes("El quechua de Puno lo hablan unas 465.000 personas, pero casi nadie 
 
 // ===================================================================== 3 ====
 s = pres.addSlide({ masterName: "CONTENIDO" });
-badge(s);
 s.addText("Hallazgo 1: la ortografía vale casi ocho puntos", { placeholder: "title" });
 s.addText("El quechua de Puno no tiene ortografía estandarizada y los voluntarios de Common Voice escribieron como supieron. Los organizadores publicaron una referencia curada de las 2.067 frases: 629 cambian de grafía más allá de mayúsculas y puntuación.",
   { placeholder: "body" });
@@ -245,19 +234,17 @@ s.addNotes("Primer hallazgo, y el más rentable. El quechua de Puno no tiene ort
 
 // ===================================================================== 4 ====
 s = pres.addSlide({ masterName: "CONTENIDO" });
-badge(s);
 s.addText("El sistema", { placeholder: "title" });
 s.addImage({
   path: path.join(__dirname, "..", "paper", "figures", "pipeline_pastel.png"),
-  x: 1.15, y: 1.35, w: 11.0, h: 4.52, objectName: "pipeline",
+  x: 3.09, y: 1.56, w: 7.16, h: 4.85, objectName: "pipeline",
 });
 s.addText("Partimos del checkpoint publicado XLS-R-300M con pre-entrenamiento continuo, afinamos 500 pasos sobre el texto curado y decodificamos habla espontánea con un modelo de lenguaje de caracteres.",
-  { x: M, y: 6.1, w: W, h: 0.6, isTextBox: true, margin: 0, fontSize: 13, color: MUTED, fontFace: THEME.bodyFontFace, lineSpacingMultiple: 1.2 });
+  { x: M, y: 6.52, w: W, h: 0.5, isTextBox: true, margin: 0, fontSize: 13, color: MUTED, fontFace: THEME.bodyFontFace, align: "center" });
 s.addNotes("Este es el sistema. De izquierda a derecha: los dos corpus más la referencia curada entran en la normalización, que lo pliega todo a un alfabeto de 29 símbolos.\n\nDe ahí salen DOS splits, y esto es lo importante. El de la izquierda separa por hablante, como hacía el baseline, pero comparte las frases entre train y dev. El de la derecha separa por hablante Y por texto.\n\nEl modelo que entregamos se entrena con el primero. Su hermano, con el segundo, y es el único del que tenemos una medición limpia. La flecha punteada marca lo que pasa de uno a otro: la receta, no los pesos.\n\nAbajo a la izquierda, la decodificación: habla leída con argmax voraz, espontánea con beam search y un modelo de lenguaje de caracteres de orden 8.");
 
 // ===================================================================== 5 ====
 s = pres.addSlide({ masterName: "CONTENIDO" });
-badge(s);
 s.addText("Resultado principal", { placeholder: "title" });
 s.addText("Sobre el split establecido, el mismo que usó el baseline, y contra la referencia curada. Todas las cifras en porcentaje.",
   { placeholder: "body", h: 0.45 });
@@ -282,7 +269,6 @@ s.addNotes("Este es el resultado. Mejoramos el baseline de 13,15 a 9,14 de WER m
 
 // ===================================================================== 6 ====
 s = pres.addSlide({ masterName: "CONTENIDO" });
-badge(s);
 s.addText("Hallazgo 2: el test no reutiliza las frases del corpus", { placeholder: "title" });
 s.addText("Solo hay 2.067 frases y todas están grabadas, así que parecía seguro que el test las reutilizaría. Sin etiquetas: medimos la distancia de edición de cada hipótesis a la frase más cercana del corpus, calibrando con el dev.",
   { placeholder: "body", h: 0.75 });
@@ -301,7 +287,6 @@ s.addNotes("Segundo hallazgo. El corpus tiene solo 2.067 frases y todas están g
 
 // ===================================================================== 7 ====
 s = pres.addSlide({ masterName: "CONTENIDO" });
-badge(s);
 s.addText("Hallazgo 3: cuánto vale haber oído la frase", { placeholder: "title" });
 s.addText("El split establecido comparte todas sus frases de evaluación con el entrenamiento, y no por descuido: con 2.067 frases y 77 hablantes, no hay otra forma de usar las 22.727 grabaciones.",
   { placeholder: "body", h: 0.65 });
@@ -321,7 +306,6 @@ s.addNotes("Tercer hallazgo, y el que creo que sobrevivirá al sistema.\n\nEl sp
 
 // ===================================================================== 8 ====
 s = pres.addSlide({ masterName: "CONTENIDO" });
-badge(s);
 s.addText("Cuántos pasos entrenar, y cuánto es ruido", { placeholder: "title" });
 s.addText("Partiendo de un checkpoint ya adaptado hace falta mucho menos entrenamiento que los 8.000 pasos de la receta original. Entre 250 y 1.000 pasos, y con tasas de 1e-5 a 5e-5, todo cae entre 7,1 y 7,3 de WER medio.",
   { placeholder: "body", h: 0.75 });
@@ -340,7 +324,6 @@ s.addNotes("Sobre cuánto entrenar. Partiendo de un checkpoint ya adaptado al qu
 
 // ===================================================================== 9 ====
 s = pres.addSlide({ masterName: "CONTENIDO" });
-badge(s);
 s.addText("Lo que no funcionó: promediar modelos", { placeholder: "title" });
 s.addText("Un ruido de 0,3 entre semillas es justo lo que el ensemble debería eliminar, así que esperábamos una ganancia. Ninguna de las dos formas de combinar la da, y el fallo tiene un mecanismo que pudimos medir.",
   { placeholder: "body", h: 0.75 });
@@ -361,7 +344,6 @@ s.addNotes("Tres cosas que esperábamos que ayudaran y no lo hicieron. La primer
 
 // ==================================================================== 10 ====
 s = pres.addSlide({ masterName: "CONTENIDO" });
-badge(s);
 s.addText("Lo que no funcionó: máscara y modelo de lenguaje", { placeholder: "title" });
 s.addText("Más regularización",
   { x: M, y: 1.45, w: 5.6, h: 0.3, isTextBox: true, margin: 0, fontSize: 16, bold: true, color: RUST, fontFace: THEME.bodyFontFace });
@@ -391,7 +373,6 @@ s.addNotes("Las otras dos cosas que no funcionaron.\n\nA la izquierda, la regula
 
 // ==================================================================== 11 ====
 s = pres.addSlide({ masterName: "CONTENIDO" });
-badge(s);
 s.addText("El conjunto reservado, medido una sola vez", { placeholder: "title" });
 s.addText("Un dev que ha guiado todas las decisiones deja de ser imparcial. El nuestro guió pasos, tasas, 72 configuraciones de modelo de lenguaje y la decodificación por dominio: nada de eso es entrenamiento, pero todo es selección.",
   { placeholder: "body", h: 0.7 });
@@ -413,7 +394,6 @@ s.addNotes("Esta lámina es la que más me importa metodológicamente.\n\nUn dev
 
 // ==================================================================== 12 ====
 s = pres.addSlide({ masterName: "CONTENIDO" });
-badge(s);
 s.addText("Limitaciones", { placeholder: "title" });
 cards(s, [
   { big: "1", label: "sola transcripción humana de hablantes de 60 o más años en todo el corpus — y el test espontáneo son íntegramente hablantes de esa edad" },
