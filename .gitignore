@@ -267,3 +267,8 @@ data/spontaneous/
 data/manifests/sharedtask*/
 submission/
 .DS_Store
+
+# slides build artefacts
+deliverables/slides/node_modules/
+deliverables/slides/package*.json
+deliverables/slides/qa*
