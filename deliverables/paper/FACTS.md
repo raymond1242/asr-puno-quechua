@@ -245,6 +245,12 @@ gives 9.83, worse than greedy.
 - **77% hapax without naming the set** — it is the scripted sentence corpus.
 - **13.15 → 9.23** — wrong, mixes a mean with a scripted column. Use 9.14.
 - **13.15 → 9.38** — that is the greedy mean, not the submitted system's.
+- **"nearly eight of those points"** said of the 13.15 → 9.14 headline — the
+  mean gain is 13.15 − 9.14 = **4.01** points, so it cannot contain eight. The
+  7.95 orthography effect is a *scripted*-column figure on dev. Phrase it as the
+  abstract does: "worth nearly eight points of scripted WER on its own", in a
+  sentence of its own. (Caught 2026-10-16 in the slide deck's narration and in
+  the slide 1 card label; both fixed.)
 - **"The LM gains 0.8 WER per domain"** (S07 finding E) — superseded. On the
   final recipe it gains nothing measurable on scripted, and on held-out data
   the spontaneous gain disappears too.

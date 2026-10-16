@@ -216,10 +216,10 @@ s.addText([
 ], { placeholder: "authors" });
 cards(s, [
   { big: "13,15 → 9,14", label: "WER medio frente al baseline publicado,\nmedido con la misma regla" },
-  { big: "8 puntos", label: "de WER explicados solo por la ortografía\nde la referencia curada" },
+  { big: "8 puntos", label: "de WER en scripted que explica por sí sola\nla ortografía de la referencia curada" },
   { big: "1,1 puntos", label: "lo que vale haber oído una frase\nen boca de otros hablantes" },
 ], 5.0, 1.6, { bigSize: 26 });
-s.addNotes("Buenos días. Presento el sistema del equipo Innova para la Tarea 1 del shared task de SIMBig 2026: reconocimiento de voz para el quechua de Puno. Adelanto las tres cifras que estructuran la charla: mejoramos el baseline publicado de 13,15 a 9,14 de WER medio; ocho de esos puntos se explican solo por la ortografía de la referencia; y medimos que haber oído una frase en boca de otros hablantes vale 1,1 puntos.");
+s.addNotes("Buenos días. Presento el sistema del equipo Innova para la Tarea 1 del shared task de SIMBig 2026: reconocimiento de voz para el quechua de Puno. Adelanto las tres cifras que estructuran la charla: mejoramos el baseline publicado de 13,15 a 9,14 de WER medio; la ortografía de la referencia curada vale, ella sola, casi ocho puntos de WER en scripted; y medimos que haber oído una frase en boca de otros hablantes vale 1,1 puntos.");
 
 // ===================================================================== 2 ====
 s = pres.addSlide({ masterName: "CONTENIDO" });
