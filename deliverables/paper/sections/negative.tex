@@ -1,11 +1,14 @@
 \section{Approaches Without Measurable Gains}
 \label{sec:negative}
 
+This section describes other approaches tested for the competition that did not
+yield positive results.
+
 \subsection{Averaging CTC models across seeds}
 
-
-Seed noise of 0.3 mean WER is what ensembling should remove, so we expected a
-gain. Neither fusion rule delivers one. CTC emits sharp peaks at particular
+We explored an ensemble of the models across seeds, which did not improve
+results. Seed noise of 0.3 mean WER is what ensembling should remove, so a gain
+was the expectation; neither fusion rule delivers one. CTC emits sharp peaks at particular
 frames, and independently trained models place them at adjacent but not
 identical frames; averaging logits is a geometric mean, so a confident peak
 averaged against a near-zero value collapses and the letter disappears.
