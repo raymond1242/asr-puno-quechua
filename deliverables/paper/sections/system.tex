@@ -10,16 +10,11 @@ unlabelled Puno Quechua audio, then CTC fine-tuning \cite{graves2006ctc} on
 validated and silver data. Continued pre-training is what adapts a multilingual
 model to the phonology of a language it has barely seen, and is reliably worth
 its cost in low-resource settings \cite{dehaven2022cpt,getman2024adaptation};
-we reuse the authors' checkpoint rather than repeat it.
+we reuse the authors' checkpoint rather than replicate it.
 
 The released checkpoints are fairseq files, and fairseq 0.12.2 has no wheel for
 current Python versions, so we port the weights to the HuggingFace
-\texttt{Wav2Vec2ForCTC} implementation \cite{wolf2020transformers}, mapping all
-424 tensors with none missing or unexpected.\footnote{Two details silently
-corrupt the result if missed: fairseq nests the convolutional layer norm one
-level deeper, and the published dictionary gained a word-delimiter symbol after
-some checkpoints were trained, so vocabulary size must be checked per
-checkpoint. Our converter refuses to write a model unless every tensor maps.}
+\texttt{Wav2Vec2ForCTC} implementation \cite{wolf2020transformers}.
 As a correctness check, the converted model scores 27.26 WER on the baseline's
 out-of-domain set against its published 27.4, confirming the port is faithful.
 
@@ -44,15 +39,9 @@ submitted model, not its weights.}
 
 \subsection{Decoding}
 
-Greedy CTC decoding commits to the most probable symbol at each 20\,ms frame
-independently, with no notion of the word being formed, while the baseline's
-out-of-domain errors are overwhelmingly substitutions -- the signature of words
-that are nearly right. That invites a language model, and it must be over
-characters: Quechua builds words by chaining suffixes, and 77\% of the distinct
-word forms in the scripted sentence corpus occur exactly once, so a word-level
-model would never have seen the correct form of most words it must judge.
-
-The models are character $n$-grams estimated by counting, with modified
+Spontaneous speech is decoded with a language model over characters rather
+than words; Section~\ref{sec:discussion} explains why. These language models
+are character $n$-grams estimated by counting, with modified
 Kneser-Ney smoothing \cite{chen1996smoothing} to reserve probability for
 sequences the training text never shows. We check each one against KenLM
 \cite{heafield2011kenlm}: a distribution must sum to one, so for 200 contexts
