@@ -5,24 +5,27 @@ Read-speech corpora for low-resource languages are built the way this one was:
 a small pool of sentences recorded many times over by the few speakers who
 volunteer -- here 2{,}067 sentences and 77 speakers. Any split that separates speakers while using all the recordings therefore
 evaluates with complete text overlap, by construction rather than oversight:
-the training portion must contain every sentence to contain every clip. We report this as a
-property of the benchmark, and it is consequential: a development set whose
-sentences the model has already heard from other speakers prefers systems that
-remember text over systems that recognise speech.
+a training portion that holds every clip also holds every sentence. We report
+this as a property of the benchmark, and we think it matters, because a
+development set whose sentences the model has already heard from other speakers
+can favour systems that remember text over systems that recognise speech.
 
-The remedy is cheap: report the text-disjoint figure alongside the conventional
-one. Where a corpus ships an official split disjoint in both respects, as
-Common Voice does here at the cost of one recording per sentence, the lost
-training data buys one honest measurement among the optimistic ones.
+Common Voice ships an official split for this corpus that separates speakers
+and sentences at the same time, keeping one recording per sentence. We built
+our own instead, so that every recording stayed available for training, but the
+official one is the simpler route for anyone starting from scratch: it gives up
+some training audio and returns a development set that memorised text cannot
+flatter.
 
 Decoding is the other place where the shape of the data decides the method.
 Greedy CTC decoding commits to the most probable symbol at each 20\,ms frame
 independently, with no notion of the word being formed, and the error profile
 shows what that costs: on the baseline's out-of-domain set we measure 23.4\%
 substitutions against almost no deletions or insertions -- the signature of
-words that are nearly right. That invites a language model, and it must be over
-characters: Quechua builds words by chaining suffixes, and 77\% of the distinct
-word forms in the scripted sentence corpus occur exactly once, so a word-level
-model would never have seen the correct form of most words it must judge.
+words that are nearly right. That invites a language model, and we chose one over
+characters rather than words: Quechua builds words by chaining suffixes, and
+77\% of the distinct word forms in the scripted sentence corpus occur exactly
+once, so a word-level model would never have seen the correct form of most
+words it would have to score.
 
 % =====================================================================
