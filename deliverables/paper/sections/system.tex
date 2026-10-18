@@ -7,9 +7,9 @@ We start from the baseline's strongest balanced checkpoint: XLS-R-300M
 \cite{babu2022xlsr}, a multilingual wav2vec~2.0 model
 \cite{baevski2020wav2vec2} of 315M parameters, continued pre-training on 65 hours of
 unlabelled Puno Quechua audio, then CTC fine-tuning \cite{graves2006ctc} on
-validated and silver data. Continued pre-training is what adapts a multilingual
-model to the phonology of a language it has barely seen, and is reliably worth
-its cost in low-resource settings \cite{dehaven2022cpt,getman2024adaptation};
+validated and silver data. Continued pre-training adapts a multilingual
+model to a language it has barely seen and is reliably worth its cost in
+low-resource settings \cite{dehaven2022cpt,getman2024adaptation};
 we reuse the authors' checkpoint rather than replicate it.
 
 The released checkpoints are fairseq files, and fairseq 0.12.2 has no wheel for
@@ -44,9 +44,8 @@ than words; Section~\ref{sec:discussion} explains why. These language models
 are character $n$-grams estimated by counting, with modified
 Kneser-Ney smoothing \cite{chen1996smoothing} to reserve probability for
 sequences the training text never shows. We check each one against KenLM
-\cite{heafield2011kenlm}: a distribution must sum to one, so for 200 contexts
-we sum the probability of every possible next character; the largest deviation
-was of order $10^{-6}$.
+\cite{heafield2011kenlm}: summing over 200 contexts, the largest departure from
+a unit distribution was of order $10^{-6}$.
 
 Decoding uses flashlight-text's \emph{lexicon-free} beam search
 \cite{kahn2022flashlight} with beam width 64. The qualifier matters: a

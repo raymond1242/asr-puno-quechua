@@ -1,11 +1,13 @@
 \section{Limitations}
 \label{sec:limitations}
 
-\textbf{The submitted system contains data leakage.} It is trained on the
-established split, whose training portion contains the development sentences.
-We submit it for comparability with the published baseline and because it sees
-15\% more distinct sentences than the text-disjoint alternative. However, there
-is data leakage across splits.
+\textbf{The submitted system's development figures are affected by
+sentence-level leakage.} It is trained on the established split, whose training
+portion contains every development sentence, read by other speakers; no
+development audio and no official test audio were used in training. Its
+development scores are therefore optimistic. We submit it for comparability
+with the published baseline and because it sees 15\% more distinct sentences
+than the text-disjoint model.
 
 \textbf{The search was narrow:} we varied updates and learning rate only.
 Batch size, spontaneous upsampling, layer dropout, accent folding and the

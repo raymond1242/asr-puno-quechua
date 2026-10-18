@@ -55,7 +55,7 @@ We fold everything to the curated convention: lowercase, Unicode NFC,
 verified against the curated reference rather than assumed -- it contains no
 accented vowels and no hyphens in 2{,}067 sentences -- leaving a 29-symbol
 training alphabet, every symbol of which the baseline checkpoint can already
-emit: its CTC layer has 50 outputs, and our 29 are a subset of them.
+emit.
 
 The folding is orthographic, not lexical: the organisers' curation also
 replaces whole word forms (\texttt{allqu}$\rightarrow$\texttt{alqu}), and we
@@ -76,8 +76,7 @@ and 757 of 757 test sentences also occur in training.
 We therefore built a second split, \texttt{sharedtask\_both}, disjoint in
 speakers \emph{and} text. Holding out sentences costs clips: the
 development set therefore falls to 339 scripted clips, against 1{,}493 in
-\texttt{sharedtask}. With 1{,}347 reference words, one WER point is thirteen
-words, and we treat differences below a few tenths as noise throughout.
+\texttt{sharedtask}. With 1{,}347 reference words, one WER point is thirteen words.
 
 We use both, as Figure~\ref{fig:pipeline} summarises. Decisions are made on
 \texttt{sharedtask\_both}, where no development sentence has been heard in
