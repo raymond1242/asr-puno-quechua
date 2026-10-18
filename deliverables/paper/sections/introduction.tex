@@ -35,14 +35,15 @@ This paper makes three contributions:
 
 \begin{enumerate}
   \item A system that improves the published baseline from 13.15 to 9.14 mean
-        WER measured on the same split with the same reference text
-        (Section~\ref{sec:results}).
-  \item The first quantification of sentence overlap in the established
-        evaluation split for this variety: hearing a sentence read by other
-        speakers is worth 1.1 WER points, a 21\% relative reduction
-        (Section~\ref{sec:overlap}).
-  \item Three reproducible negative results on ensembling, regularisation and
-        language model decoding (Section~\ref{sec:negative}).
+        WER, together with a measurement showing that most of this gain comes
+        from the curated orthography rather than from acoustic modelling.
+  \item A speaker- and text-disjoint split and a held-out set measured once,
+        motivated by the observation that the established split shares every
+        development sentence with training. Code, splits and configurations
+        are released.
+  \item Three approaches that did not help: averaging CTC logits across seeds,
+        stronger SpecAugment masking, and language-model weights tuned on
+        development data.
 \end{enumerate}
 
 % =====================================================================

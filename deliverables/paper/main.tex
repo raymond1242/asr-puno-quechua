@@ -36,25 +36,18 @@ Arequipa, Peru\\
 
 \begin{abstract}
 We describe our system for Task~1 of the SIMBig~2026 shared task on automatic
-speech recognition for Puno Quechua (ISO 639-3: \texttt{qxp}). Starting from the
-published XLS-R-300M checkpoint with continued pre-training, we fine-tune for
-500 updates on the organisers' curated reference transcriptions and decode
-spontaneous speech with a character $n$-gram language model under lexicon-free
-beam search. On the established speaker-disjoint split the system improves the
-published baseline from 13.15 to 9.14 mean word error rate.
-
-Two properties of the task proved more consequential than any modelling choice.
-The curated orthography released for the task is worth nearly eight points of
-scripted word error rate on its own: one fixed set of hypotheses scores 8.13
-against the raw Common Voice transcriptions and 16.08 against the curated ones. And the established split shares every
-evaluation sentence with training, because the corpus holds 2{,}067 sentences
-read by 77 speakers; we measure that hearing a sentence from other speakers is
-worth 1.1 points, and show that the shared task's own test does not reuse those
-sentences. We therefore also report a speaker- and text-disjoint split, and a
-held-out set measured once after freezing every decision. Three negative
-results follow: averaging CTC logits across seeds degrades recognition through
-a mechanism we identify, stronger masking is monotonically harmful, and the
-language model, tuned on development data, no longer helps on held-out data.
+speech recognition for Puno Quechua (ISO 639-3: \texttt{qxp}). We fine-tune the
+published XLS-R-300M checkpoint, already adapted by continued pre-training, for
+500 updates on the organisers' curated reference text, and decode spontaneous
+speech with a character $n$-gram language model under lexicon-free beam search.
+Relative to the published baseline, mean word error rate falls from 13.15 to
+9.14 under the established speaker-disjoint split, a gain that comes mostly
+from the curated orthography rather than from acoustic modelling. Because that
+split shares every development sentence with training, we select systems on a
+speaker- and text-disjoint split and report a held-out set measured once. We
+also report three approaches that did not help: averaging CTC logits across
+seeds, stronger SpecAugment masking, and language-model weights tuned on
+development data.
 
 \keywords{Automatic speech recognition \and Low-resource languages \and
 Quechua \and Evaluation methodology \and Self-supervised learning.}

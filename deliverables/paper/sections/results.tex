@@ -52,44 +52,6 @@ Table~\ref{tab:main} reports the submitted seed. We treat any difference below
 roughly 0.3 mean WER as indistinguishable from the random draw. The contrast between the two sets is easy to overlook when choosing one:
 the smaller does not merely measure less precisely, it manufactures differences.
 
-\subsection{Sentence overlap, measured}
-\label{sec:overlap}
-
-Section~\ref{sec:newsentences} makes the established split's text overlap a
-measurement problem rather than a curiosity. The design holds the evaluation fixed and varies only what the model saw.
-Condition~A trains on the text-disjoint split, so the development sentences
-never appear. Condition~B adds the recordings of those same sentences made by
-\emph{training} speakers, 3.65 hours more audio. Comparing A with B alone would
-confound exposure with data volume, so condition~B$_{\text{eq}}$ removes 3.64
-hours of randomly chosen A clips, leaving exactly A's 39.94 hours. Every
-condition uses the same configuration, 250 updates, and the same development set.
-
-
-\begin{table}[tb]
-\centering\small
-\caption{What hearing a development sentence from other speakers is worth.
-Same development set and same configuration (250 updates) throughout; only the
-training data differs. Two seeds where two figures are given.}
-\label{tab:overlap}
-\begin{tabular}{llrr}
-\toprule
-Training set & Dev sentences heard? & Scripted WER & Scripted CER \\
-\midrule
-A \quad (39.94 h) & no & 5.20 / 4.97 & 0.65 / 0.62 \\
-B$_{\text{eq}}$ (39.94 h) & yes, same hours as A & \textbf{3.79 / 4.23} & \textbf{0.48 / 0.55} \\
-B \quad (43.58 h) & yes, with 3.65 h more audio & 4.68 & 0.60 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The seed ranges of A and B$_{\text{eq}}$ do not overlap -- the worse
-B$_{\text{eq}}$ run still beats the better A run -- so at equal training
-volume, having heard a sentence read by other speakers is worth 1.1 WER points,
-a 21\% relative reduction, and about 19\% of CER.
-
-It is a lower bound: memorisation grows with training, and the original
-baseline runs for 8{,}000 updates.
-
 \subsection{Held-out evaluation}
 \label{sec:heldout-results}
 

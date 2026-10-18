@@ -63,22 +63,6 @@ do not propagate those to the spontaneous transcriptions, which nobody curated.
 The 372 substitutions recoverable from the scripted diff would touch 1.20\% of
 spontaneous training tokens; we leave this untested.
 
-\subsection{The test set does not reuse training sentences}
-\label{sec:newsentences}
-
-With only 2{,}067 sentences in the corpus and all of them recorded, it seemed
-near certain that the scripted test would reuse them. It does not. Using our
-own greedy hypotheses on the test audio -- no labels -- we measured the
-normalised edit distance from each to the nearest of the 2{,}067 sentences,
-calibrating against development audio where the answer is known. A development
-hypothesis whose sentence is in the pool sits at a median distance of 0.000;
-with that one sentence removed from the pool, 0.516. The test scores 0.480.
-
-Its sentences are therefore new, which decides how the rest of this paper is
-measured: a development set whose sentences the model has heard from eleven
-other speakers will prefer systems that remember text over systems that
-recognise speech.
-
 \subsection{Splits}
 \label{sec:splits}
 
@@ -96,7 +80,8 @@ words, one WER point is thirteen words, and we treat differences below a few
 tenths as noise throughout.
 
 We use both, as Figure~\ref{fig:pipeline} summarises: decisions are made on
-\texttt{sharedtask\_both}, which matches the condition the test is in, while
+\texttt{sharedtask\_both}, where no development sentence has been heard in
+training, while
 the comparison against the published baseline is reported on
 \texttt{sharedtask}, the ruler the baseline was measured with.
 The spontaneous side needs no reconstruction -- its release carries an official
