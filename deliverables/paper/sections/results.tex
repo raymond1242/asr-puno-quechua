@@ -8,7 +8,8 @@ reference. The two blocks are \emph{different models} on \emph{different
 splits}. Above: the system we submit, against the published baseline, both on
 the established split. Below: its sibling, trained on the text-disjoint split
 and therefore the only model we can measure without sentence overlap; its
-held-out row was measured once, after every decision was frozen.}
+held-out row was measured once, after every decision was frozen. The two
+upper rows are single models, so no seed statistics apply to them.}
 \label{tab:main}
 \begin{tabular}{lrrrrrr}
 \toprule
@@ -23,7 +24,9 @@ System & WER & CER & WER & CER & WER & CER \\
 \multicolumn{7}{l}{\emph{Sibling model, trained and measured on \texttt{sharedtask\_both}}} \\
 \multicolumn{7}{l}{\emph{(speaker- and text-disjoint), mean of three seeds}} \\
 \quad on its development set & 4.85 & 0.62 & 9.20 & 1.31 & 7.02 & 0.96 \\
+\quad\quad \emph{std.\ dev.\ across seeds} & 0.21 & 0.04 & 0.18 & 0.02 & 0.19 & 0.03 \\
 \quad on its held-out set & 10.79 & 2.33 & 3.38 & 0.39 & 7.08 & 1.36 \\
+\quad\quad \emph{std.\ dev.\ across seeds} & 0.14 & 0.02 & 0.07 & 0.01 & 0.05 & 0.01 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -42,7 +45,7 @@ broad plateau, not an optimum.
 Reaching that conclusion required a correction worth reporting. A single run at
 500 updates and $2\times10^{-5}$ gave 6.96 mean WER, best of every
 configuration on all four numbers, and we recorded it as the winner; a second
-seed of the identical recipe gave 7.26. Three seeds measure the noise directly:
+seed of the identical configuration gave 7.26. Three seeds measure the noise directly:
 7.02 mean WER with standard deviation 0.19 on the text-disjoint development
 set, and 9.23 with deviation 0.08 on the larger speaker-disjoint one, of which
 Table~\ref{tab:main} reports the submitted seed. We treat any difference below
@@ -59,13 +62,13 @@ never appear. Condition~B adds the recordings of those same sentences made by
 \emph{training} speakers, 3.65 hours more audio. Comparing A with B alone would
 confound exposure with data volume, so condition~B$_{\text{eq}}$ removes 3.64
 hours of randomly chosen A clips, leaving exactly A's 39.94 hours. Every
-condition uses the same recipe, 250 updates, and the same development set.
+condition uses the same configuration, 250 updates, and the same development set.
 
 
 \begin{table}[tb]
 \centering\small
 \caption{What hearing a development sentence from other speakers is worth.
-Same development set and same recipe (250 updates) throughout; only the
+Same development set and same configuration (250 updates) throughout; only the
 training data differs. Two seeds where two figures are given.}
 \label{tab:overlap}
 \begin{tabular}{llrr}

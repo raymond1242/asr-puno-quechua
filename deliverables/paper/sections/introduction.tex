@@ -20,10 +20,14 @@ the SIMBig~2026 shared task, which evaluates Puno Quechua recognition on
 held-out audio in two domains, scripted and spontaneous speech.
 
 The task ranks systems by a mean rank over \emph{four} numbers: word and
-character error rate in each domain. This is not a detail. It rules out the
-baseline paper's strongest scripted system, which reaches 1.19 WER on read
-speech but 13.6 on spontaneous; the balanced configuration, at 2.11 and 3.15,
-is the one worth starting from. Throughout this paper we therefore report all
+character error rate in each of the two domains. This is not a detail of
+scoring. The baseline paper reports two configurations of the same model, and
+averaging the four numbers separates them sharply. The first reaches 1.19 WER
+on scripted speech but 13.6 WER on spontaneous speech: excellent in one domain,
+unusable in the other. The second reaches 2.11 and 3.15 on those same two
+measures, giving up a little scripted accuracy for a great deal of spontaneous
+accuracy. The mean ranks the second above the first, and it is the
+configuration we start from. Throughout this paper we therefore report all
 four numbers and their mean, and we treat an improvement that moves one of them
 in the wrong direction as no improvement at all.
 

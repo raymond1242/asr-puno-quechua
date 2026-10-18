@@ -37,8 +37,8 @@ measurements, so any difference between them is orthography and not acoustics.
 Those transcriptions score
 8.13 WER and 2.76 CER against the raw reference, and 16.08 and 3.77 against the
 curated one. Nearly eight points of word error rate are orthography rather than
-acoustics, and aligning the training text with the curated reference is the
-single largest improvement available in this task.
+acoustics. We therefore fine-tune on the curated reference rather than on the
+raw Common Voice text (Section~\ref{sec:system}).
 
 \subsection{Text normalisation}
 
@@ -87,9 +87,7 @@ speakers to each partition, balancing gender and duration. It separates
 speakers cleanly but cannot separate text: the training portion holds all
 2{,}067 sentences, so every development sentence appears there, read by other
 people. On the baseline's own released split, 805 of 805 development sentences
-and 757 of 757 test sentences also occur in training. This follows from the
-corpus rather than from oversight -- using all 22{,}727 clips requires all
-2{,}067 sentences in training.
+and 757 of 757 test sentences also occur in training.
 
 We therefore built a second split, \texttt{sharedtask\_both}, disjoint in
 speakers \emph{and} text. Holding out sentences costs clips, so its development
