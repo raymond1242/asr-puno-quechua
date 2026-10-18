@@ -14,11 +14,11 @@ Deck: `simbig2026_task1-en.pptx` (11 slides)
 
 - Normal paragraphs are **what you say**. Lines in *italics inside brackets* are **cues**: don't read them.
 - Each slide carries a time window. They are cumulative: at the end of slide 6 you should be at 5:45.
-- Planned length: **11:15** at **130 words per minute**, plus two seconds per slide change. The rate
+- Planned length: **11:25** at **130 words per minute**, plus two seconds per slide change. The rate
   is set below Spanish pace on purpose: reading technical English aloud is slower, and rushing costs
   more clarity than the extra minute buys you.
 - **Check your own pace before recording.** Read slide 7 aloud and time it. About 65 seconds means you
-  are on 130 wpm and the talk lands at 11:15; 75 seconds means 115 wpm and roughly 12:40. Both sit well
+  are on 130 wpm and the talk lands at 11:25; 75 seconds means 115 wpm and roughly 12:40. Both sit well
   inside the limit, so there is no reason to hurry.
 - The organisers say *up to* 15 minutes, and the deck lost two slides when the paper did, so there is
   now close to four minutes of headroom. Spend it on pauses after the numbers, not on extra material.
@@ -60,8 +60,8 @@ Raise `-crf` to shrink further; check with `ls -lh`. Keep the output at 1920×10
 | 7 | Did not work: averaging models | 5:45 – 6:50 | 65 s |
 | 8 | Did not work: masking and the language model | 6:50 – 7:55 | 65 s |
 | 9 | The held-out set | 7:55 – 8:50 | 55 s |
-| 10 | Limitations | 8:50 – 10:00 | 70 s |
-| 11 | What we take away | 10:00 – 11:15 | 75 s |
+| 10 | Limitations | 8:50 – 10:10 | 80 s |
+| 11 | What we take away | 10:10 – 11:25 | 75 s |
 
 ---
 
@@ -268,16 +268,18 @@ scripted clips.
 
 # Slide 10 · Limitations
 
-**8:50 – 10:00**
+**8:50 – 10:10**
 
 *[On screen: three cards — 1 · 2 de 9 · 3 — and the terracotta block below]*
 
 We identified four limitations.
 
-First, and most seriously, the system we submit contains data leakage. It is trained on the established
-split, whose training portion contains the development sentences. We submit it for comparability with
-the baseline, and because it sees 15 percent more distinct sentences, but there is leakage across
-splits and we say so.
+First, and most seriously, our development figures are affected by sentence-level leakage. The system
+is trained on the established split, whose training portion contains every development sentence, read
+by other speakers. No development audio and no official test audio were used in training, so our
+development scores are optimistic while the test figures are not implicated. We submit it for
+comparability with the baseline, and because it sees 15 percent more distinct sentences than the
+text-disjoint model.
 
 Second: the search was narrow, two hyperparameters out of nine. Third: three seeds are enough to expose
 apparent wins, but not to separate similar configurations.
@@ -293,7 +295,7 @@ transcription. The domain that decides half of our rank is the one we can least 
 
 # Slide 11 · What we take away
 
-**10:00 – 11:15**
+**10:10 – 11:25**
 
 *[On screen: three closing cards, the future directions, and the repository link]*
 
