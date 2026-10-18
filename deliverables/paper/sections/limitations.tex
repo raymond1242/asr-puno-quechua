@@ -1,13 +1,11 @@
 \section{Limitations}
 \label{sec:limitations}
 
-\textbf{The submitted system has no clean measurement of its own.} It is
-trained on the established split, whose training portion contains the
-development sentences. We submit it for comparability with the published
-baseline and because it sees 15\% more distinct sentences than the
-text-disjoint alternative; that more text should help on new sentences is a
-reasoned bet, not a measured one. The clean figures belong to the sibling model trained on the text-disjoint
-split.
+\textbf{The submitted system contains data leakage.} It is trained on the
+established split, whose training portion contains the development sentences.
+We submit it for comparability with the published baseline and because it sees
+15\% more distinct sentences than the text-disjoint alternative. However, there
+is data leakage across splits.
 
 \textbf{The search was narrow:} we varied updates and learning rate only.
 Batch size, spontaneous upsampling, layer dropout, accent folding and the
@@ -18,8 +16,10 @@ noise, too few to separate configurations differing by less than their spread.
 
 \textbf{Half the ranking cannot be measured faithfully.} The spontaneous test
 consists entirely of speakers aged sixty or over. In the whole corpus, such
-speakers contribute one gold transcription and 2.90 of 35.41 hours, all silver.
-No development or held-out set we can construct contains gold elderly
+speakers are a small and almost unlabelled part of it: they account for 2.90 of
+its 35.41 hours of spontaneous audio, some 8\%, and across all of those clips
+exactly one carries a human transcription. The rest hold only silver labels.
+No development or held-out set we can construct therefore contains gold elderly
 spontaneous speech, so the domain deciding half our rank is the one we can
 least evaluate. Gold transcriptions from elderly speakers are, in our view, the
 single most valuable addition this resource could receive.
