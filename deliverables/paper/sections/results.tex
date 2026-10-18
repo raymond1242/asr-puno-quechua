@@ -5,28 +5,32 @@
 \centering\small
 \caption{Main results, all figures percentages, scored against the curated
 reference. The two blocks are \emph{different models} on \emph{different
-splits}. Above: the system we submit, against the published baseline, both on
-the established split. Below: its sibling, trained on the text-disjoint split
+splits}. Above: the system we submit, against the published baseline,
+which we converted and re-evaluated ourselves, both on the established split. Below: its sibling, trained on the text-disjoint split
 and therefore the only model we can measure without sentence overlap; its
-held-out row was measured once, after every decision was frozen. The two
-upper rows are single models, so no seed statistics apply to them.}
+held-out row was measured once, after every decision was frozen, and the
+figures in parentheses are the standard deviation across the three seeds. The two upper
+rows are single models, so no seed statistics apply to them.}
 \label{tab:main}
-\begin{tabular}{lrrrrrr}
+\newcommand{\sd}[1]{{\scriptsize\,(#1)}}
+\begin{tabular}{l r@{}l r@{}l r@{}l r@{}l r@{}l r@{}l}
 \toprule
-& \multicolumn{2}{c}{Scripted} & \multicolumn{2}{c}{Spontaneous} & \multicolumn{2}{c}{Mean} \\
-\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
-System & WER & CER & WER & CER & WER & CER \\
+& \multicolumn{4}{c}{Scripted} & \multicolumn{4}{c}{Spontaneous} & \multicolumn{4}{c}{Mean} \\
+\cmidrule(lr){2-5}\cmidrule(lr){6-9}\cmidrule(lr){10-13}
+System & \multicolumn{2}{c}{WER} & \multicolumn{2}{c}{CER}
+       & \multicolumn{2}{c}{WER} & \multicolumn{2}{c}{CER}
+       & \multicolumn{2}{c}{WER} & \multicolumn{2}{c}{CER} \\
 \midrule
-\multicolumn{7}{l}{\emph{Submitted model, on \texttt{sharedtask} development (speaker-disjoint)}} \\
-\quad Published baseline, converted & 16.08 & 3.77 & 10.23 & 1.39 & 13.15 & 2.58 \\
-\quad This work & 9.23 & 3.01 & 9.06 & 1.30 & \textbf{9.14} & 2.16 \\
+\multicolumn{13}{l}{\emph{Submitted model, on \texttt{sharedtask} development (speaker-disjoint)}} \\
+\quad Published baseline & 16.08 && 3.77 && 10.23 && 1.39 && 13.15 && 2.58 & \\
+\quad This work & 9.23 && 3.01 && 9.06 && 1.30 && \textbf{9.14} && 2.16 & \\
 \addlinespace
-\multicolumn{7}{l}{\emph{Sibling model, trained and measured on \texttt{sharedtask\_both}}} \\
-\multicolumn{7}{l}{\emph{(speaker- and text-disjoint), mean of three seeds}} \\
-\quad on its development set & 4.85 & 0.62 & 9.20 & 1.31 & 7.02 & 0.96 \\
-\quad\quad \emph{std.\ dev.\ across seeds} & 0.21 & 0.04 & 0.18 & 0.02 & 0.19 & 0.03 \\
-\quad on its held-out set & 10.79 & 2.33 & 3.38 & 0.39 & 7.08 & 1.36 \\
-\quad\quad \emph{std.\ dev.\ across seeds} & 0.14 & 0.02 & 0.07 & 0.01 & 0.05 & 0.01 \\
+\multicolumn{13}{l}{\emph{Sibling model, trained and measured on \texttt{sharedtask\_both}}} \\
+\multicolumn{13}{l}{\emph{(speaker- and text-disjoint), mean of three seeds}} \\
+\quad on its development set & 4.85 &\sd{0.21} & 0.62 &\sd{0.04} & 9.20 &\sd{0.18}
+       & 1.31 &\sd{0.02} & 7.02 &\sd{0.19} & 0.96 &\sd{0.03} \\
+\quad on its held-out set & 10.79 &\sd{0.14} & 2.33 &\sd{0.02} & 3.38 &\sd{0.07}
+       & 0.39 &\sd{0.01} & 7.08 &\sd{0.05} & 1.36 &\sd{0.01} \\
 \bottomrule
 \end{tabular}
 \end{table}
