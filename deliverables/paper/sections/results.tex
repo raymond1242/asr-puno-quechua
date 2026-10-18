@@ -31,35 +31,23 @@ System & WER & CER & WER & CER & WER & CER \\
 \end{tabular}
 \end{table}
 
-\subsection{How long to train}
-\label{sec:plateau}
-
-Fine-tuning from an already-adapted checkpoint needs far less training than the
-original 8{,}000 updates. On the text-disjoint split, every configuration
-between 250 and 1{,}000 updates and between $1\times10^{-5}$ and
-$5\times10^{-5}$ lands at 7.1--7.3 mean WER: below about 200 updates the
-curated orthography is not yet learned, beyond about 1{,}000 the model
-memorises, and by 8{,}000 it is worse than at 500. The useful conclusion is a
-broad plateau, not an optimum.
-
-Reaching that conclusion required a correction worth reporting. A single run at
-500 updates and $2\times10^{-5}$ gave 6.96 mean WER, best of every
-configuration on all four numbers, and we recorded it as the winner; a second
-seed of the identical configuration gave 7.26. Three seeds measure the noise directly:
+One early result had to be corrected, and the correction is what fixed how we
+read every later comparison. A single run at 500 updates and
+$2\times10^{-5}$ gave 6.96 mean WER, best of every configuration on all four
+numbers, and we recorded it as the winner; a second seed of the identical
+configuration gave 7.26, so the win was a draw of the seed and not a better
+setting. Three seeds measure the noise directly:
 7.02 mean WER with standard deviation 0.19 on the text-disjoint development
 set, and 9.23 with deviation 0.08 on the larger speaker-disjoint one, of which
 Table~\ref{tab:main} reports the submitted seed. We treat any difference below
 roughly 0.3 mean WER as indistinguishable from the random draw. The contrast between the two sets is easy to overlook when choosing one:
 the smaller does not merely measure less precisely, it manufactures differences.
 
-\subsection{Held-out evaluation}
-\label{sec:heldout-results}
-
-
-The lower block of Table~\ref{tab:main} gives the measurement. The means agree
-closely, 7.02 against 7.08, which is the result we care about:
-after dozens of decisions taken on the development set, the held-out estimate
-did not collapse, and seed spread falls to 0.05.
+Table~\ref{tab:main} shows the results for the sibling model on both of its
+partitions: the development set it was selected on, and the held-out set
+measured once afterwards. The means agree closely, 7.02 against 7.08, which
+shows that after dozens of decisions taken on the development set the held-out
+estimate did not collapse, and seed spread falls to 0.05.
 
 The agreement hides two large opposing movements, both composition rather than
 generalisation. Scripted error doubles because the held-out portion contains

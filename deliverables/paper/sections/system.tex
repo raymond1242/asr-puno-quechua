@@ -19,7 +19,7 @@ As a correctness check, the converted model scores 27.26 WER on the baseline's
 out-of-domain set against its published 27.4, confirming the port is faithful.
 
 Fine-tuning runs for 500 updates at learning rate $2\times10^{-5}$
-(Section~\ref{sec:plateau}). Batches are formed by total audio duration rather
+(Section~\ref{sec:results}). Batches are formed by total audio duration rather
 than clip count: clips range from under two seconds to thirty, so any fixed
 count either exhausts memory on long clips or wastes the device on short ones.
 
