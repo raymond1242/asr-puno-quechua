@@ -33,8 +33,7 @@ System & \multicolumn{2}{c}{WER} & \multicolumn{2}{c}{CER}
 \end{tabular}
 \end{table}
 
-One early result had to be corrected, and the correction is what fixed how we
-read every later comparison. A single run at 500 updates and
+One early result had to be corrected. A single run at 500 updates and
 $2\times10^{-5}$ gave 6.96 mean WER, best of every configuration on all four
 numbers, and we recorded it as the winner; a second seed of the identical
 configuration gave 7.26, so the win was a draw of the seed and not a better
@@ -57,7 +56,6 @@ one speaker who alone scores 98.67 WER over 59 clips; removing that same
 speaker from the development set moves its scripted WER from 9.23 to 5.71.
 Spontaneous error falls by two thirds because 46\% of the held-out spontaneous
 portion comes from speakers already heard through silver transcriptions in
-training. With 77 scripted speakers, a split places few voices in each
-partition, so no such figure should be read without its per-speaker breakdown.
+training.
 
 % =====================================================================
