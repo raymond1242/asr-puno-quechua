@@ -58,16 +58,13 @@ que lo que se oye coincida con lo que se lee.
 *[En pantalla: título, autores y las tres cifras — 13,15 → 9,14 · 8 puntos · 1,1 puntos]*
 
 Buenos días. Soy Raymond Negron, del Departamento de Computación de la Universidad Católica San Pablo,
-en Arequipa. Presento el sistema del equipo Innova para la Tarea 1 del shared task de SIMBig 2026:
-reconocimiento automático de voz para el quechua de Puno. Es un trabajo conjunto con Rosa
+en Arequipa. El día de hoy voy a presentar el sistema del equipo Innova para la Tarea 1 del shared task de SIMBig 2026. Es un trabajo conjunto con Rosa
 Paccotacya-Yanque.
 
-Tres cifras estructuran la charla. Mejoramos el baseline publicado de **13,15** a
+Comenzamos, tres cifras estructuran la charla. Mejoramos el baseline publicado de **13,15** a
 **9,14** de WER medio. La ortografía de la referencia curada vale, ella sola, casi **ocho** puntos de
 WER en `scripted`. Y medimos cuánto vale haber oído antes una frase en boca de otros hablantes:
 **1,1 puntos**.
-
-*[Señala las tres tarjetas con el cursor mientras las dices. Avanza.]*
 
 ---
 
@@ -79,14 +76,14 @@ WER en `scripted`. Y medimos cuánto vale haber oído antes una frase en boca de
 
 El quechua de Puno lo hablan unas **465.000** personas, pero casi nadie lo escribe, porque la
 escolarización es en español. Por eso el reconocimiento de voz aquí no es una comodidad: una interfaz
-de texto deja fuera precisamente a la gente a la que queremos servir.
+de texto deja fuera a las personas a la que queremos ayudar.
 
 Dos cosas sobre la tarea. Partimos del corpus de **66 horas** que publicaron los organizadores. Y el ranking promedia **cuatro** números: WER y CER —tasa de error de palabra
 y de carácter— en `scripted` y en `spontaneous`.
 
-No es un detalle de reglamento. Miren la tabla: la configuración del paper con mejor
-`scripted` tiene **1,19** de WER, pero **13,6** en `spontaneous`. Promediar los cuatro números la descarta
-y premia a la configuración equilibrada. Esta métrica decide qué optimizamos.
+Si miran la tabla de abajo: la configuración del paper con mejor
+`scripted` tiene **1,19** de WER, pero **13,6** en `spontaneous`. Entonces, promediar los cuatro números descarta esa configuracion
+y premia a la configuración equilibrada..
 
 *[Avanza al decir «qué optimizamos».]*
 
@@ -98,15 +95,15 @@ y premia a la configuración equilibrada. Esta métrica decide qué optimizamos.
 
 *[En pantalla: tres ejemplos de grafía, la tabla de dos referencias, y la conclusión en terracota]*
 
-Primer hallazgo, y el más rentable.
+Comenzamos con el primer hallazgo.
 
 El quechua de Puno no tiene ortografía estandarizada, así que los voluntarios de Common Voice escribieron
 como supieron. Los organizadores publicaron una referencia curada de las **2.067** frases, y de ellas
-**629** cambian de grafía. Son cambios de una sola letra —*allqu* pasa a *alqu*, *iskay* a *ishkay*—
+**629** cambian. Son cambios de una sola letra —*allqu* pasa a *alqu*, *iskay* a *ishkay*—
 pero en WER cada uno cuesta una palabra entera.
 
-El experimento aísla el efecto. Cogimos el modelo del paper, le hicimos transcribir el conjunto de
-desarrollo **una** vez, y puntuamos esas transcripciones congeladas contra las dos referencias.
+Este experimento aísla el efecto. Tomamos el modelo del paper, le hicimos transcribir el conjunto de
+dev **una** vez, y puntuamos esas transcripciones contra las dos referencias.
 Contra el texto crudo da **8,13**. Contra el curado, **16,08**.
 
 El modelo no cambió entre las dos medidas: es el mismo conjunto de hipótesis. Esos **7,95** puntos de
@@ -124,14 +121,13 @@ diferencia son ortografía, no acústica.
 
 Este es el sistema. Partimos del checkpoint publicado de XLS-R-300M con pre-entrenamiento continuo y
 afinamos **500** pasos. Los dos corpus y la referencia curada entran en la normalización, que lo
-pliega todo a un alfabeto de **29** símbolos.
+compacta todo a un alfabeto de **29** símbolos.
 
 De ahí salen **dos** splits, y esta es la parte importante. El de la izquierda separa por hablante, igual
 que el baseline, pero comparte las frases entre entrenamiento y desarrollo. El de la derecha separa por
 hablante **y** por texto.
 
-El modelo que entregamos se entrena con el primero. Su hermano, con el segundo, y es el único del que
-tenemos una medición limpia.
+El modelo que entregamos se entrena con el primero. Y el segundo nos permite una medición limpia.
 
 Abajo a la izquierda, la decodificación: `scripted` con argmax voraz, `spontaneous` con beam search y un
 modelo de lenguaje de caracteres de orden ocho.
@@ -147,14 +143,14 @@ modelo de lenguaje de caracteres de orden ocho.
 *[En pantalla: la tabla de siete columnas y las tres conclusiones de abajo]*
 
 Este es el resultado. Mejoramos el baseline de **13,15** a **9,14** de WER medio, sobre el mismo split y
-contra la misma referencia curada. Es una comparación de igual a igual: mismo modelo base y
+contra la misma referencia curada. Es una comparación simétrica: mismo modelo base y
 misma regla de medir.
 
-Y quiero ser honesto sobre de dónde viene la mejora. En `scripted` ganamos **6,85** puntos, que es del
-mismo orden que los **7,95** del desajuste ortográfico de la lámina anterior. La mayor parte de lo que
-ganamos es ortografía, no capacidad acústica nueva.
+Y siendo honesto sobre de dónde viene la mejora. En `scripted` ganamos **6,85** puntos, que es del
+mismo orden que los **7,95** del desajuste ortográfico. La mayor parte de lo que
+ganamos es ortografía, no capacidad acústica en realidad.
 
-Lo que sí conseguimos es mejorar en los **cuatro** números a la vez, que es lo que exige el ranking.
+Lo que sí conseguimos es mejorar en los **cuatro** números a la vez, como se ve en la tabla, que es lo que exige el ranking.
 
 *[Avanza.]*
 
@@ -166,19 +162,21 @@ Lo que sí conseguimos es mejorar en los **cuatro** números a la vez, que es lo
 
 *[En pantalla: la tabla de tres condiciones a la izquierda, la tarjeta del 0,480 a la derecha]*
 
-Segundo hallazgo. El corpus tiene solo **2.067** frases y todas están grabadas, así que dábamos por hecho
-que el test oficial las reutilizaría. Fuimos a comprobarlo.
+Segundo hallazgo. El corpus tiene solo **2.067** frases y todas están grabadas, así que pensamos
+que el test oficial las reutilizaría. Y bueno, lo análizamos.
 
-El test llega sin transcripciones, así que no podemos usar etiquetas. Transcribimos su audio con nuestro
+Transcribimos su audio con nuestro
 propio sistema y medimos, para cada hipótesis, la distancia de edición a la frase más parecida del corpus. Calibramos esa distancia con el conjunto de desarrollo, donde
 sí sabemos la respuesta.
 
 Una hipótesis de desarrollo cuya frase está en el corpus queda a distancia **cero**. Si la quitamos,
 sube a **0,516**. El test da **0,480**: se comporta como el caso de frase no vista.
-Sus frases son nuevas, y además más largas.
+Por tanto, sus frases son nuevas, y además más largas.
 
 Esto decide cómo se mide todo lo demás: un conjunto de desarrollo cuyas frases el modelo ya ha oído a
 otros once hablantes premia a quien recuerda texto, no a quien reconoce habla.
+
+Entonces con esa premisa vayamos al siguiente hallazgo.
 
 *[Avanza: esa última frase abre la lámina siguiente.]*
 
@@ -190,18 +188,17 @@ otros once hablantes premia a quien recuerda texto, no a quien reconoce habla.
 
 *[En pantalla: la tabla A / B_eq / B, y las dos tarjetas de abajo]*
 
-Tercer hallazgo, y el que creo que sobrevivirá al sistema.
+Tercer hallazgo.
 
-El split establecido comparte **todas** sus frases de evaluación con el entrenamiento. Y no es un
-descuido: con **2.067** frases y **77** hablantes, no hay otra forma de usar las **22.727** grabaciones.
+El split establecido comparte **todas** sus frases de evaluación con el entrenamiento. Con **2.067** frases y **77** hablantes, no hay otra forma de usar las **22.727** grabaciones.
 Es una propiedad del benchmark.
 
-Para ponerle número diseñamos el experimento de la tabla. El conjunto de desarrollo y la receta son los
+Entonces, diseñamos el experimento de la tabla. El conjunto de desarrollo y la receta son los
 mismos en los tres casos; lo único que cambia es qué vio el modelo. **A** no oye las frases de
-desarrollo. **B** sí las oye, con **3,65** horas más de audio. Y **B subíndice eq** las oye con las
-mismas horas que A, quitando clips al azar, para que la única diferencia sea la exposición.
+desarrollo. **B** sí las oye, con **3,65** horas más de audio. Y **B eq** las oye con las
+mismas horas que A, quitando clips al azar, para que la única diferencia sea la exposición de las frases.
 
-Los rangos de semillas de A y de B-eq no se solapan: el peor B-eq sigue siendo mejor que el mejor A.
+El peor B-eq sigue siendo mejor que el mejor A.
 Haber oído la frase en boca de otros vale **1,1 puntos** de WER, un **21 %** relativo. Y es una cota
 inferior, porque la memorización crece con el entrenamiento, y el baseline entrena **8.000** pasos frente
 a nuestros 500.
@@ -218,11 +215,11 @@ a nuestros 500.
 
 Sobre cuánto entrenar. Partiendo de un checkpoint ya adaptado al quechua hacen falta muchos menos pasos
 que los **8.000** de la receta original. Entre **250** y **1.000** pasos, con tasas de **1e-5** a
-**5e-5**, todo cae entre **7,1** y **7,3**: es una meseta ancha, no un óptimo afilado.
+**5e-5**, todo cae entre **7,1** y **7,3**: es una superficie ancha, no un óptimo.
 
-Y aquí una corrección que vale la pena contar. Una corrida de 500 pasos a 2e-5 dio **6,96** de WER
-medio, la mejor en los cuatro números, y la anotamos como ganadora. Una segunda semilla de la receta
-**idéntica** dio **7,26**. Era suerte.
+Y aquí una corrección que vale la pena. Una corrida de 500 pasos a 2e-5 dio **6,96** de WER
+medio, la mejor en los cuatro números, y la anotamos como ganadora. Pero, una segunda semilla de la receta
+**idéntica** dio **7,26**. No fue una medición exacta.
 
 Por eso medimos el ruido con tres semillas y fijamos un umbral de **0,3**: por debajo, una diferencia no
 se distingue del azar. Y fíjense en el contraste entre los dos conjuntos de desarrollo: el pequeño tiene
@@ -238,20 +235,19 @@ más del doble de dispersión. No solo mide con menos precisión: fabrica difere
 
 *[En pantalla: tabla del ensemble a la izquierda, el mecanismo explicado a la derecha]*
 
-Paso a tres cosas que esperábamos que ayudaran y no lo hicieron. La primera: promediar modelos entre
+Tres cosas que esperábamos que ayudaran y no lo hicieron. La primera: promediar modelos entre
 semillas.
 
-Un ruido de **0,3** entre semillas es justo lo que un ensemble debería eliminar. No ganamos con ninguna
+Un ruido de **0,3** entre semillas es justo lo que un ensemble debería eliminar. Pero, no ganamos con ninguna
 de las dos formas de combinar.
 
 Y el fallo tiene un mecanismo que pudimos medir. CTC no emite letras de forma continua: emite picos
 agudos en frames concretos. Dos modelos entrenados por separado colocan esos
-picos en frames contiguos, pero no idénticos. Promediar logits equivale a una media geométrica, así que
-un pico seguro promediado contra un valor casi nulo se desploma y la letra desaparece: los borrados de
-carácter suben de **21** a **50**.
+picos en frames contiguos, pero no idénticos. Entonces, promediar logits equivale a una media geométrica, así que
+un pico seguro promediado contra un valor casi nulo se pierde y la letra desaparece: los carácteres borrados suben de **21** a **50**.
 
 Promediando probabilidades, que es media aritmética, ya no se pierden letras, pero tampoco se gana nada.
-Con las alineaciones de CTC, la regla de fusión importa más que el ensemble.
+Entonces, entendimos que con las alineaciones de CTC, la regla de fusión importa más que el ensemble.
 
 *[Avanza.]*
 
@@ -267,15 +263,14 @@ Las otras dos cosas que no funcionaron.
 
 A la izquierda, más regularización. El sobreajuste pasados los mil pasos era el fallo que observábamos, y
 SpecAugment lo ataca directamente. Pues subir el enmascarado empeora de forma monótona —**6,81**,
-**7,05**, **7,68**— y empeora en los cuatro números. Con 500 pasos hay poco tiempo para sobreajustar, y
-la máscara quita evidencia que el modelo tiene pocas ocasiones de ver.
+**7,05**, **7,68**— y empeora en los cuatro números. Y, con 500 pasos hay poco tiempo para sobreajustar.
 
 A la derecha, el modelo de lenguaje. En `scripted` ninguna configuración gana de forma medible, así que
 el sistema final decodifica `scripted` sin él. En `spontaneous` sí gana sobre el conjunto de desarrollo,
 entre **0,12** y **0,31** según la semilla. Pero en el conjunto reservado gana **cero**, y pierde
 **0,04** y **0,08**.
 
-Una ganancia ajustada sobre el desarrollo no sobrevivió a un conjunto limpio. Lo mantenemos porque el
+Una ganancia ajustada sobre el desarrollo no sobrevivió a un conjunto limpio. Pero, lo mantenemos porque el
 efecto está dentro del ruido, pero ya no afirmamos que ayude.
 
 *[Avanza.]*
@@ -288,18 +283,18 @@ efecto está dentro del ruido, pero ya no afirmamos que ayude.
 
 *[En pantalla: tabla desarrollo frente a reservado, y las tres conclusiones]*
 
-Esta lámina es la que más me importa metodológicamente.
+Esta diapositiva es la que más me importa metodológicamente.
 
 Un conjunto de desarrollo que ha guiado todas las decisiones deja de ser una estimación imparcial. El
-nuestro guió los pasos, las tasas, **72** configuraciones de modelo de lenguaje y qué decodificador usar
-en cada dominio. Nada de eso es entrenamiento, pero todo es selección.
+nuestro definió los pasos, las tasas, **72** configuraciones de modelo de lenguaje y qué decodificador usar
+en cada dominio.
 
 Por eso apartamos un conjunto el primer día, no lo miramos nunca, y lo medimos **una** sola vez, después
-de congelar todas las decisiones. Y para que el compromiso fuera comprobable, pre-registramos las cifras esperadas en la cabecera del script antes de ejecutarlo.
+de congelar todas las decisiones.
 
 Las medias coinciden: **7,02** contra **7,08**. Pero esa coincidencia esconde dos movimientos grandes y
-opuestos: `scripted` dobla su error y `spontaneous` lo divide por tres. Ambos son composición, no
-generalización: el reservado contiene un hablante que él solo da **98,67** de WER sobre **59** clips.
+opuestos: `scripted` dobla su error y `spontaneous` lo divide por tres. Pero, pensamos que es más por composición, no
+generalización, ya que el reservado contiene un hablante que él solo da **98,67** de WER sobre **59** clips en `scripted`.
 
 *[Avanza.]*
 
@@ -311,17 +306,15 @@ generalización: el reservado contiene un hablante que él solo da **98,67** de 
 
 *[En pantalla: tres tarjetas — 1 · 2 de 9 · 3 — y el bloque en terracota de abajo]*
 
-Cuatro limitaciones, y las digo porque declararlas fortalece el trabajo.
+Identificamos cuatro limitaciones.
 
-La primera, la más incómoda, es la de abajo: el sistema que entregamos no tiene una medición limpia
+La primera, el sistema que entregamos no tiene una medición limpia
 propia. Se entrena sobre el split establecido, cuyo entrenamiento contiene las frases de desarrollo. Lo
-entregamos por comparabilidad con el baseline y porque ve un **15 %** más de frases distintas, pero eso
-último es una apuesta razonada, no medida.
+entregamos por comparabilidad con el baseline y porque ve un **15 %** más de frases distintas.
 
-Segunda: el barrido fue estrecho, **2** hiperparámetros de **9**. Tercera: **3** semillas bastan para
-tumbar victorias aparentes, pero no para separar recetas parecidas.
+Segunda: el barrido fue estrecho, **2** hiperparámetros de **9**. Tercera: **3** semillas bastan para desenmascarar victorias aparentes, pero no para separar recetas parecidas.
 
-Y la cuarta, la más seria: la mitad del ranking no la podemos medir con fidelidad. El test de
+Y la cuarta, la mitad del ranking no la podemos medir con fidelidad. El test de
 `spontaneous` son íntegramente hablantes de sesenta años o más, y en todo el corpus esos hablantes
 aportan **una** sola transcripción humana. El dominio que decide la mitad de nuestro puesto es el que
 menos podemos evaluar.
@@ -336,13 +329,13 @@ menos podemos evaluar.
 
 *[En pantalla: tres tarjetas de cierre, las direcciones a futuro y el enlace al repositorio]*
 
-Para cerrar, tres cosas.
+Y, finalmente, para cerrar, tres cosas.
 
 Mejoramos el baseline publicado de **13,15** a **9,14** de WER medio, sobre el mismo split y con la misma
 referencia, y somos explícitos en que casi todo ese avance es ortografía, no acústica.
 
-Segundo, y creo que es lo que más puede durar: pusimos número al solapamiento de frases del benchmark
-establecido. Vale **1,1 puntos**, y mostramos que el test del concurso no comparte esas frases.
+Segundo, pusimos número al solapamiento de frases del benchmark
+establecido. Vale unos **1,1 puntos**, y mostramos que el test del concurso no comparte esas frases.
 
 Y tercero, **tres** resultados negativos reproducibles, con el mecanismo explicado en el caso del
 ensemble.
