@@ -3,14 +3,12 @@
 
 \begin{table}[tb]
 \centering\small
-\caption{Main results, all figures percentages, scored against the curated
-reference. The two blocks are \emph{different models} on \emph{different
-splits}. Above: the system we submit, against the published baseline,
-which we converted and re-evaluated ourselves, both on the established split. Below: its sibling, trained on the text-disjoint split
-and therefore the only model we can measure without sentence overlap; its
-held-out row was measured once, after every decision was frozen, and the
-figures in parentheses are the standard deviation across the three seeds. The two upper
-rows are single models, so no seed statistics apply to them.}
+\caption{Main results, all figures percentages against the curated reference.
+The two blocks are \emph{different models} on \emph{different splits}. Above:
+the submitted system and the published baseline, each a single run, on the
+established split. Below: its sibling on the text-disjoint split, whose
+held-out row was measured once, after every decision was frozen. Parentheses
+give the standard deviation across three seeds.}
 \label{tab:main}
 \newcommand{\sd}[1]{{\scriptsize\hspace{2.2pt}(#1)}}
 \begin{tabular}{l r@{}l r@{}l r@{}l r@{}l r@{}l r@{}l}
