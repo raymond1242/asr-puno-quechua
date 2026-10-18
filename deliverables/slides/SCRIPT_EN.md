@@ -2,7 +2,7 @@
 
 **SIMBig 2026 · Task 1 · Team Innova**
 Required video · up to 15 minutes · English · MP4, 1080p or better, max 100 MB
-Deck: `simbig2026_task1.pptx` (13 slides)
+Deck: `simbig2026_task1-en.pptx` (11 slides)
 
 > This is the **required** English narration. The Spanish `GUION.md` is the optional second
 > video and is not a translation of this one — it is the version you wrote and corrected.
@@ -13,15 +13,15 @@ Deck: `simbig2026_task1.pptx` (13 slides)
 ## How to use this script
 
 - Normal paragraphs are **what you say**. Lines in *italics inside brackets* are **cues**: don't read them.
-- Each slide carries a time window. They are cumulative: at the end of slide 7 you should be at 6:45.
-- Planned length: **13:10** at **130 words per minute**, plus two seconds per slide change. The rate
+- Each slide carries a time window. They are cumulative: at the end of slide 6 you should be at 5:45.
+- Planned length: **11:15** at **130 words per minute**, plus two seconds per slide change. The rate
   is set below Spanish pace on purpose: reading technical English aloud is slower, and rushing costs
   more clarity than the extra minute buys you.
-- **Check your own pace before recording the whole thing.** Read slide 7 aloud and time it. If it takes
-  about 75 seconds you are on 130 wpm and the whole talk lands at 13:10. If it takes 95 seconds you are
-  at 115 wpm, which puts the full script at roughly 14:50 — too close to the limit, so apply the cuts in
-  "If you are running long" before you record, not during.
-- The organisers say *up to* 15 minutes. A 13-minute video is not penalised; a 15:03 one might be.
+- **Check your own pace before recording.** Read slide 7 aloud and time it. About 65 seconds means you
+  are on 130 wpm and the talk lands at 11:15; 75 seconds means 115 wpm and roughly 12:40. Both sit well
+  inside the limit, so there is no reason to hurry.
+- The organisers say *up to* 15 minutes, and the deck lost two slides when the paper did, so there is
+  now close to four minutes of headroom. Spend it on pauses after the numbers, not on extra material.
 
 **Numbers are read the English way.** Decimal **point**, not comma: `9.14` is "nine point one four",
 `465,000` is "four hundred sixty-five thousand". `1e-5` is "one e minus five". `WER` is said as a word,
@@ -32,14 +32,6 @@ Deck: `simbig2026_task1.pptx` (13 slides)
 ---
 
 ## Before you record
-
-Two things to settle first:
-
-1. **The deck is in Spanish.** Its titles, labels and decimal commas are Spanish while you narrate in
-   English. Nothing in the rules forbids it, but a viewer reading `9,14` while hearing "nine point one
-   four" has to do the conversion. An English build of the deck is the clean fix.
-2. **The slide 1 title is the old one.** The paper is now *Transcription Conventions and Sentence
-   Overlap Outweigh Modelling Choices in Puno Quechua ASR*. Slide 1 still shows the previous title.
 
 **Recording.** No camera needed: capture the screen in presenter mode and narrate. Record in one pass —
 if you stumble, repeat the whole sentence rather than stopping, which makes it trivial to cut.
@@ -59,36 +51,34 @@ Raise `-crf` to shrink further; check with `ls -lh`. Keep the output at 1920×10
 
 | # | Slide | Window | Length |
 |---|---|---|---|
-| 1 | Title | 0:00 – 0:50 | 50 s |
-| 2 | Puno Quechua, and why ASR | 0:50 – 1:45 | 55 s |
-| 3 | Finding 1: spelling conventions | 1:45 – 2:40 | 55 s |
-| 4 | The system | 2:40 – 3:35 | 55 s |
-| 5 | Main result | 3:35 – 4:20 | 45 s |
-| 6 | Finding 2: the test does not reuse sentences | 4:20 – 5:30 | 70 s |
-| 7 | Finding 3: what hearing a sentence is worth | 5:30 – 6:45 | 75 s |
-| 8 | How many updates, and what is noise | 6:45 – 8:05 | 80 s |
-| 9 | Did not work: averaging models | 8:05 – 9:10 | 65 s |
-| 10 | Did not work: masking and the language model | 9:10 – 10:15 | 65 s |
-| 11 | The held-out set | 10:15 – 11:10 | 55 s |
-| 12 | Limitations | 11:10 – 12:05 | 55 s |
-| 13 | What we take away | 12:05 – 13:10 | 65 s |
+| 1 | Title | 0:00 – 0:55 | 55 s |
+| 2 | Puno Quechua, and why ASR | 0:55 – 1:50 | 55 s |
+| 3 | Finding 1: spelling conventions | 1:50 – 2:45 | 55 s |
+| 4 | The system | 2:45 – 3:40 | 55 s |
+| 5 | Main result | 3:40 – 4:25 | 45 s |
+| 6 | How many updates, and what is noise | 4:25 – 5:45 | 80 s |
+| 7 | Did not work: averaging models | 5:45 – 6:50 | 65 s |
+| 8 | Did not work: masking and the language model | 6:50 – 7:55 | 65 s |
+| 9 | The held-out set | 7:55 – 8:50 | 55 s |
+| 10 | Limitations | 8:50 – 10:00 | 70 s |
+| 11 | What we take away | 10:00 – 11:15 | 75 s |
 
 ---
 
 # Slide 1 · Title
 
-**0:00 – 0:50**
+**0:00 – 0:55**
 
-*[On screen: title, authors, and the three numbers — 13,15 → 9,14 · 8 puntos · 1,1 puntos]*
+*[On screen: title, authors, and the three cards — 13.15 → 9.14 · 8 points · Measured once]*
 
 Good morning. My name is Raymond Negron, from the Department of Computing at Universidad Católica San
 Pablo, in Arequipa. Today I will present team Innova's system for Task 1 of the SIMBig 2026 shared
 task: automatic speech recognition for Puno Quechua. This is joint work with Rosa Paccotacya-Yanque.
 
-Three numbers frame this talk. We improve the published baseline from 13.15 to 9.14 mean WER. The
+Three things frame this talk. We improve the published baseline from 13.15 to 9.14 mean WER. The
 curated reference's spelling conventions are worth nearly eight points of scripted WER on their own.
-And we measure what it is worth for a model to have heard a sentence before, from other speakers:
-1.1 points.
+And because the established split lets a model hear every development sentence in training, we
+selected on a split that does not, and kept a held-out set we scored only once.
 
 *[Point at the three cards with the cursor as you say them. Advance.]*
 
@@ -96,7 +86,7 @@ And we measure what it is worth for a model to have heard a sentence before, fro
 
 # Slide 2 · Puno Quechua, and why ASR
 
-**0:50 – 1:45**
+**0:55 – 1:50**
 
 *[On screen: four cards — 465.000 · 66 h · 4 · 659 — and the table of the paper's two configurations]*
 
@@ -117,7 +107,7 @@ spontaneous. So averaging the four numbers discards that configuration and rewar
 
 # Slide 3 · Finding 1: spelling conventions are worth nearly eight points
 
-**1:45 – 2:40**
+**1:50 – 2:45**
 
 *[On screen: three spelling examples, the two-reference table, and the conclusion in terracotta]*
 
@@ -141,7 +131,7 @@ points of difference are spelling, not acoustics.
 
 # Slide 4 · The system
 
-**2:40 – 3:35**
+**2:45 – 3:40**
 
 *[On screen: the pipeline diagram, full page]*
 
@@ -164,7 +154,7 @@ character language model.
 
 # Slide 5 · Main result
 
-**3:35 – 4:20**
+**3:40 – 4:25**
 
 *[On screen: the seven-column table and the three takeaways below]*
 
@@ -181,59 +171,9 @@ ranking demands.
 
 ---
 
-# Slide 6 · Finding 2: the test set does not reuse the corpus sentences
+# Slide 6 · How many updates to train, and what is noise
 
-**4:20 – 5:30**
-
-*[On screen: the three-condition table on the left, the 0,480 card on the right]*
-
-Second finding. The corpus has only 2,067 sentences and all of them are recorded, so we assumed the
-official test set would reuse them. So we checked.
-
-We transcribed the test audio with our own system and measured, for each hypothesis, the edit distance
-to the closest sentence in the corpus. We calibrated that distance on the development set, where we do
-know the answer.
-
-A development hypothesis whose sentence is in the corpus sits at distance zero. If we remove it, that
-rises to 0.516. The test gives 0.480: it behaves like the unseen-sentence case. So its sentences are
-new, and they are also longer.
-
-This decides how everything else is measured: a development set whose sentences the model has already
-heard from eleven other speakers rewards systems that remember text, not systems that recognise speech.
-
-With that in mind, let us go to the next finding.
-
-*[Advance: that last sentence opens the next slide.]*
-
----
-
-# Slide 7 · Finding 3: what hearing a sentence is worth
-
-**5:30 – 6:45**
-
-*[On screen: the A / B_eq / B table, and the two cards below]*
-
-Third finding.
-
-The established split shares every one of its evaluation sentences with training. With 2,067 sentences
-and 77 speakers, there is no other way to use the 22,727 recordings. It is a property of the benchmark.
-
-So we designed the experiment in the table. The development set and the recipe are the same in all
-three cases; the only thing that changes is what the model saw. A does not hear the development
-sentences. B does, with 3.65 more hours of audio. And B-eq hears them with the same number of hours as
-A, dropping clips at random, so that the only difference is exposure to the sentences.
-
-The worst B-eq is still better than the best A. Having heard the sentence from other speakers is worth
-1.1 WER points, 21 percent relative. And that is a lower bound, because memorisation grows with
-training, and the baseline trains for 8,000 updates against our 500.
-
-*[Advance.]*
-
----
-
-# Slide 8 · How many updates to train, and what is noise
-
-**6:45 – 8:05**
+**4:25 – 5:45**
 
 *[On screen: three cards — 7,02 · 9,23 · 0,3 — and the correction paragraph]*
 
@@ -255,9 +195,9 @@ differences that are not there.
 
 ---
 
-# Slide 9 · What did not work: averaging models
+# Slide 7 · What did not work: averaging models
 
-**8:05 – 9:10**
+**5:45 – 6:50**
 
 *[On screen: the ensemble table on the left, the mechanism explained on the right]*
 
@@ -279,9 +219,9 @@ ensemble.
 
 ---
 
-# Slide 10 · What did not work: masking and the language model
+# Slide 8 · What did not work: masking and the language model
 
-**9:10 – 10:15**
+**6:50 – 7:55**
 
 *[On screen: two halves — SpecAugment on the left, the language model on the right]*
 
@@ -302,9 +242,9 @@ the noise, but we no longer claim that it helps.
 
 ---
 
-# Slide 11 · The held-out set, measured once
+# Slide 9 · The held-out set, measured once
 
-**10:15 – 11:10**
+**7:55 – 8:50**
 
 *[On screen: development versus held-out table, and the three takeaways]*
 
@@ -326,32 +266,34 @@ scripted clips.
 
 ---
 
-# Slide 12 · Limitations
+# Slide 10 · Limitations
 
-**11:10 – 12:05**
+**8:50 – 10:00**
 
 *[On screen: three cards — 1 · 2 de 9 · 3 — and the terracotta block below]*
 
 We identified four limitations.
 
-First, the system we submit has no clean measurement of its own. It is trained on the established
+First, and most seriously, the system we submit contains data leakage. It is trained on the established
 split, whose training portion contains the development sentences. We submit it for comparability with
-the baseline, and because it sees 15 percent more distinct sentences.
+the baseline, and because it sees 15 percent more distinct sentences, but there is leakage across
+splits and we say so.
 
 Second: the search was narrow, two hyperparameters out of nine. Third: three seeds are enough to expose
-apparent wins, but not to separate similar recipes.
+apparent wins, but not to separate similar configurations.
 
 And fourth, half of the ranking cannot be measured faithfully. The spontaneous test consists entirely
-of speakers aged sixty or over, and in the whole corpus those speakers contribute a single human
+of speakers aged sixty or over, and speakers of that age are a small and almost unlabelled part of the
+corpus: about eight percent of the spontaneous audio, across which exactly one clip carries a human
 transcription. The domain that decides half of our rank is the one we can least evaluate.
 
 *[Advance.]*
 
 ---
 
-# Slide 13 · What we take away
+# Slide 11 · What we take away
 
-**12:05 – 13:10**
+**10:00 – 11:15**
 
 *[On screen: three closing cards, the future directions, and the repository link]*
 
@@ -360,14 +302,16 @@ And finally, to close, three things.
 We improve the published baseline from 13.15 to 9.14 mean WER, on the same split and with the same
 reference, and we are explicit that most of that gain is spelling, not acoustics.
 
-Second, we put a number on the sentence overlap in the established benchmark. It is worth about 1.1
-points, and we show that the shared task's own test does not share those sentences.
+Second, the evaluation protocol. Because the established split shares every development sentence with
+training, we selected on a speaker- and text-disjoint split and kept a held-out set we scored once,
+after freezing every decision. The two means agree, 7.02 against 7.08, so the clean estimate did not
+collapse.
 
-And third, three reproducible negative results, with the mechanism explained in the ensemble case.
+And third, three approaches that did not help, with the mechanism explained in the ensemble case.
 
 Two directions for future work. A text-disjoint development set built on the official Common Voice
-split would give 679 honest clips instead of 339. And above all, human transcriptions from elderly
-speakers: they would make half of this benchmark measurable.
+split would give 679 honest clips instead of 339. And above all, correcting the silver labels of
+elderly speakers would make half of this benchmark measurable.
 
 All the code and the splits are in the repository. Thank you very much.
 
@@ -377,20 +321,22 @@ All the code and the splits are in the repository. Thank you very much.
 
 ## If you are running long
 
-Cut in this order. Each cut is written so the following paragraph still fits:
+Unlikely at this length, but if you do run over, cut in this order. Each cut is written so the
+following paragraph still fits:
 
-1. **Slide 8**, the correction anecdote (6.96 against 7.26) — about **20 s**. The 0.3 threshold stays,
-   which is what slides 9 and 10 need.
-2. **Slide 10**, the SpecAugment half — about **25 s**. Say only "raising the masking probability makes
+1. **Slide 6**, the correction anecdote (6.96 against 7.26) — about **20 s**. The 0.3 threshold stays,
+   which is what slides 7 and 8 need.
+2. **Slide 8**, the SpecAugment half — about **25 s**. Say only "raising the masking probability makes
    things monotonically worse" and move to the language model.
-3. **Slide 12**, the second and third limitations — about **15 s**. Do not sacrifice the first or the
+3. **Slide 10**, the second and third limitations — about **15 s**. Do not sacrifice the first or the
    fourth: those are the two that actually bound the result.
 
 ## If you are running short
 
-Do not stretch the closing. Add on **slide 6** why the calibration uses the development set: it is the
-only place where you know the answer in advance, so it gives you the two reference points — sentence
-present and sentence absent — to compare the test's 0.480 against.
+Do not stretch the closing. Add on **slide 9** why a development set that drove every decision stops
+being an unbiased estimate: it chose the number of updates, the learning rates, 72 language model
+configurations and the decoder for each domain. None of that is training, but all of it is selection,
+which is the reason the held-out set exists.
 
 ---
 
