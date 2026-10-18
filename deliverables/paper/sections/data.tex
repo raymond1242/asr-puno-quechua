@@ -74,30 +74,32 @@ people. On the baseline's own released split, 805 of 805 development sentences
 and 757 of 757 test sentences also occur in training.
 
 We therefore built a second split, \texttt{sharedtask\_both}, disjoint in
-speakers \emph{and} text. Holding out sentences costs clips, so its development
-portion falls to 339 scripted clips against 1{,}493; with 1{,}347 reference
-words, one WER point is thirteen words, and we treat differences below a few
-tenths as noise throughout.
+speakers \emph{and} text. Holding out sentences costs clips: the
+development set therefore falls to 339 scripted clips, against 1{,}493 in
+\texttt{sharedtask}. With 1{,}347 reference words, one WER point is thirteen
+words, and we treat differences below a few tenths as noise throughout.
 
-We use both, as Figure~\ref{fig:pipeline} summarises: decisions are made on
+We use both, as Figure~\ref{fig:pipeline} summarises. Decisions are made on
 \texttt{sharedtask\_both}, where no development sentence has been heard in
-training, while
-the comparison against the published baseline is reported on
-\texttt{sharedtask}, the ruler the baseline was measured with.
-The spontaneous side needs no reconstruction -- its release carries an official
-\texttt{split} column, which we adopt unchanged, excluding the 296 clips marked
-as test from training and development alike.
+training. The comparison against the published baseline is reported on
+\texttt{sharedtask}, which reproduces the baseline's design but is rebuilt from
+the released corpus and is therefore not guaranteed to be its exact partition.
+We consequently re-evaluated the published checkpoint ourselves on this split
+rather than quoting its reported figures, so both systems in
+Table~\ref{tab:main} are scored on the same clips against the same reference.
 
-\subsection{The held-out set}
-\label{sec:heldout}
+No official test audio reaches either split. The scripted test is a separate
+release that arrived after the splits were built, and the spontaneous side
+carries an official \texttt{split} column, which we adopt unchanged, excluding
+the 296 clips marked as test from training and development alike.
 
-A development set that has driven every decision -- ours drove step counts,
-learning rates, 72 language model configurations and the decoder per domain --
-is no longer an unbiased estimate. None of that is training in the gradient
-sense, but all of it is selection, and selection leaves a mark.
-
-We therefore reserved a held-out portion when the splits were built, never
-looked at it, and measured it once, after every decision here was frozen. To
-make the commitment checkable rather than merely stated, the expected figures
-were pre-registered in the evaluation script's header before it ran. Nothing
-was changed afterwards.
+Both splits also reserve a held-out portion, set aside when the splits were
+built and measured once, after every decision reported here was frozen. For
+\texttt{sharedtask\_both} it holds 364 scripted clips from seven speakers who
+appear nowhere else, and 279 spontaneous clips. A development set that has
+driven every decision -- ours drove update counts, learning rates, 72 language
+model configurations and the decoder for each domain -- is no longer an
+unbiased estimate: none of that is training in the gradient sense, but all of
+it is selection. To make the commitment checkable rather than merely stated,
+the expected figures were pre-registered in the evaluation script's header
+before it ran, and nothing was changed afterwards.
