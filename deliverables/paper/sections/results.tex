@@ -12,7 +12,7 @@ held-out row was measured once, after every decision was frozen, and the
 figures in parentheses are the standard deviation across the three seeds. The two upper
 rows are single models, so no seed statistics apply to them.}
 \label{tab:main}
-\newcommand{\sd}[1]{{\scriptsize\,(#1)}}
+\newcommand{\sd}[1]{{\scriptsize\hspace{2.2pt}(#1)}}
 \begin{tabular}{l r@{}l r@{}l r@{}l r@{}l r@{}l r@{}l}
 \toprule
 & \multicolumn{4}{c}{Scripted} & \multicolumn{4}{c}{Spontaneous} & \multicolumn{4}{c}{Mean} \\
@@ -27,9 +27,9 @@ System & \multicolumn{2}{c}{WER} & \multicolumn{2}{c}{CER}
 \addlinespace
 \multicolumn{13}{l}{\emph{Sibling model, trained and measured on \texttt{sharedtask\_both}}} \\
 \multicolumn{13}{l}{\emph{(speaker- and text-disjoint), mean of three seeds}} \\
-\quad on its development set & 4.85 &\sd{0.21} & 0.62 &\sd{0.04} & 9.20 &\sd{0.18}
+\quad Development set & 4.85 &\sd{0.21} & 0.62 &\sd{0.04} & 9.20 &\sd{0.18}
        & 1.31 &\sd{0.02} & 7.02 &\sd{0.19} & 0.96 &\sd{0.03} \\
-\quad on its held-out set & 10.79 &\sd{0.14} & 2.33 &\sd{0.02} & 3.38 &\sd{0.07}
+\quad Held-out set & 10.79 &\sd{0.14} & 2.33 &\sd{0.02} & 3.38 &\sd{0.07}
        & 0.39 &\sd{0.01} & 7.08 &\sd{0.05} & 1.36 &\sd{0.01} \\
 \bottomrule
 \end{tabular}
